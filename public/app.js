@@ -212,6 +212,13 @@ function analysisCompanies() {
   return $("#filter-passed")?.checked ? companies.filter(companyPassesCriteria) : companies;
 }
 
+function chartScopeLabel(count, limit) {
+  const scope = $("#filter-passed").checked ? "조건 통과 기업" : "비교함 전체 기업";
+  return count > limit
+    ? `${scope} ${count}개 중 비교함 순서 앞 ${limit}개만 차트에 표시합니다. 전체 값은 위 표에서 확인하세요.`
+    : `${scope} ${count}개를 차트에 표시합니다.`;
+}
+
 function invalidateScreening(message = "바뀐 조건으로 기업을 다시 찾아주세요.") {
   state.screenedCandidates = null;
   state.screeningDetails = new Map();
@@ -478,6 +485,10 @@ function signalClass(value) {
 function renderResults() {
   const { companies, year, reportCode } = state.data;
   const displayCompanies = analysisCompanies();
+  const passedCount = companies.filter(companyPassesCriteria).length;
+  const passedOnly = $("#filter-passed").checked;
+  $("#filter-count").textContent = `통과 ${passedCount} / 비교함 ${companies.length}`;
+  $("#result-scope").textContent = `비교함 ${companies.length}개 모두 분석 · 조건 통과 ${passedCount}개 · 현재 ${passedOnly ? "통과 기업" : "전체 기업"} ${displayCompanies.length}개 표시`;
   const displayMetrics = visibleMetricKeys(displayCompanies);
   const priceSelect = $("#price-company-select");
   const previousPriceCompany = priceSelect.value;
@@ -559,7 +570,7 @@ function renderChart(hoverIndex = null) {
   $("#chart-title").textContent = `${metric.label} 추이`;
   const years = state.data.years;
   const series = companies.map((company, index) => ({ name: company.name, corpCode: company.corpCode, color: colors[index], values: years.map((year) => company.financials.find((item) => item.year === year)?.[state.metric] ?? null) }));
-  $("#chart-legend").innerHTML = series.map((item) => `<span><i style="background:${item.color}"></i>${item.name}</span>`).join("") + `<span class="axis-note">${allCompanies.length>5?`전체 ${allCompanies.length}개 중 앞선 5개 표시 · `:""}${$("#financial-scale").value === "readable" ? "가독성 축" : "전체 값 축"}</span>`;
+  $("#chart-legend").innerHTML = series.map((item) => `<span><i style="background:${item.color}"></i>${item.name}</span>`).join("") + `<span class="chart-limit-note">${chartScopeLabel(allCompanies.length, 5)} · ${$("#financial-scale").value === "readable" ? "가독성 축" : "전체 값 축"}</span>`;
   const values = series.flatMap((item) => item.values).filter(Number.isFinite);
   if (!values.length) { ctx.fillStyle = "#66716b"; ctx.fillText("표시할 데이터가 없습니다.", 20, 40); return; }
   let min = Math.min(...values), max = Math.max(...values);
@@ -603,7 +614,7 @@ function renderSnapshotChart(metric, hoverIndex = null) {
   const finite = values.filter(Number.isFinite);
   $(".chart-label").textContent = "CURRENT SNAPSHOT";
   $("#chart-title").textContent = `${metric.label} 선택 기업 비교`;
-  $("#chart-legend").innerHTML = `<span class="axis-note">${allCompanies.length>5?`전체 ${allCompanies.length}개 중 앞선 5개 · `:""}투자조건에 포함된 현재 지표 · ${metric.source} 기준</span>`;
+  $("#chart-legend").innerHTML = `<span class="chart-limit-note">${chartScopeLabel(allCompanies.length, 5)} · 현재 지표 · ${metric.source} 기준</span>`;
   if (!finite.length) { ctx.fillStyle = "#66716b"; ctx.font = "13px Noto Sans KR"; ctx.fillText("선택 기업에서 확인 가능한 현재값이 없습니다.", 20, 40); return; }
   let min = Math.min(0, ...finite), max = Math.max(0, ...finite); if (min === max) max = min + 1;
   const margin = (max - min) * .1; min -= margin; max += margin;
@@ -715,7 +726,7 @@ async function renderReturnChart(hoverIndex = null) {
   const seenIndustries = new Set();
   displayCompanies.forEach((company, index) => { const benchmark = state.benchmarks[company.corpCode]; if (!benchmark?.returnHistory?.length || seenIndustries.has(benchmark.industry)) return; seenIndustries.add(benchmark.industry); const map = new Map(benchmark.returnHistory.map((row) => [row.date, row.value])); series.push({ name: `${benchmark.industry} 업종 평균`, industry: benchmark.industry, color: colors[index % colors.length], dash: true, values: fullDates.map((date) => map.get(date) ?? null) }); });
   const industryByName = new Map(series.filter((item) => item.dash).map((item) => [item.industry, item]));
-  $("#return-chart-legend").innerHTML = `<div class="legend-pairs">${companySeries.map((item) => { const industry = industryByName.get(item.industry); return `<span class="legend-pair"><b><i class="line-swatch" style="--line:${item.color}"></i>${item.name}</b>${industry ? `<em><i class="line-swatch dashed" style="--line:${industry.color}"></i>${industry.name}</em>` : ""}</span>`; }).join("")}</div><span><i class="line-swatch" style="--line:#111827"></i>KOSPI 200</span>${allDisplayCompanies.length>4?`<span class="chart-limit-note">전체 ${allDisplayCompanies.length}개 중 앞선 4개만 차트에 표시합니다. 전체 비교는 위 표에서 확인하세요.</span>`:""}`;
+  $("#return-chart-legend").innerHTML = `<div class="legend-pairs">${companySeries.map((item) => { const industry = industryByName.get(item.industry); return `<span class="legend-pair"><b><i class="line-swatch" style="--line:${item.color}"></i>${item.name}</b>${industry ? `<em><i class="line-swatch dashed" style="--line:${industry.color}"></i>${industry.name}</em>` : ""}</span>`; }).join("")}</div><span><i class="line-swatch" style="--line:#111827"></i>KOSPI 200</span><span class="chart-limit-note">${chartScopeLabel(allDisplayCompanies.length, 4)}</span>`;
   const startIndex = Math.max(0, Math.floor((fullDates.length - 1) * state.returnView.start)), endIndex = Math.max(startIndex + 1, Math.ceil((fullDates.length - 1) * state.returnView.end));
   const dates = fullDates.slice(startIndex, endIndex + 1);
   series.forEach((item) => { item.values = item.values.slice(startIndex, endIndex + 1); });

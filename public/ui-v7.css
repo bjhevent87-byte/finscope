@@ -25,3 +25,15 @@
 @media(max-width:1500px){.criteria-list{grid-template-columns:repeat(2,minmax(0,1fr))}.criterion-catalog>div{grid-template-columns:repeat(3,minmax(0,1fr))}.workflow-guide{overflow-x:auto}.workflow-guide>div{flex:0 0 auto}}
 @media(max-width:1080px){.discovery-panel{grid-template-columns:1fr}.discovery-panel>.leader-list{grid-column:1;grid-row:auto}.selected-row{grid-template-columns:1fr 1fr!important}.selected-count,.selected-companies,.period-help{grid-column:1/-1!important}.criteria-list{grid-template-columns:1fr}.criterion-catalog>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.workflow-guide>i{display:none}.criterion-catalog>div{grid-template-columns:1fr}.canvas-tooltip{width:min(280px,calc(100% - 16px))}.selected-row{grid-template-columns:1fr!important}}
+
+/* Keep the screening state visible before and after comparing companies. */
+.workspace-navigation .filter-toggle{display:flex;align-items:center;gap:16px;margin-top:20px;padding:18px 20px;border:2px solid #b7d2ff;border-radius:16px;background:#edf5ff;color:#153d78;font-size:16px;font-weight:800;cursor:pointer}
+.workspace-navigation .filter-toggle:has(input:not(:checked)){border-color:#d5deea;background:#f7f9fc;color:#344054}
+.workspace-navigation .filter-toggle input{flex:0 0 auto;width:23px;height:23px;margin:0;accent-color:#2878f0;cursor:pointer}
+.workspace-navigation .filter-toggle-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;color:inherit;font-weight:800}
+.workspace-navigation .filter-toggle-copy strong{font-size:17px;line-height:1.35}
+.workspace-navigation .filter-toggle-copy small{color:#526b86;font-size:13px;font-weight:550;line-height:1.5}
+.workspace-navigation .filter-count{flex:0 0 auto;padding:8px 11px;border-radius:10px;background:#fff;color:#1769d2;font-size:13px;white-space:nowrap}
+.workspace-navigation .results-heading #result-scope{margin:9px 0 0;color:#1769d2;font-size:14px;font-weight:800;line-height:1.5}
+.workspace-navigation .chart-limit-note{background:#eaf3ff;color:#254f83;font-size:14px;line-height:1.5}
+@media(max-width:720px){.workspace-navigation .filter-toggle{align-items:flex-start;flex-wrap:wrap;padding:16px;gap:12px}.workspace-navigation .filter-count{margin-left:35px}.workspace-navigation .results-heading{align-items:flex-start;gap:10px;flex-wrap:wrap}}
