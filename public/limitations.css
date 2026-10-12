@@ -1,0 +1,5 @@
+.notice > div { flex: 1; }
+.notice ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.notice li + li { margin-top: 4px; }
+.notice b { color: var(--ink); }
+footer a { color: inherit; }

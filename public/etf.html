@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2878f0">
+  <title>ETF 비교 — FinScope</title>
+  <link rel="manifest" href="/app.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="pages.css?v=11">
+  <style>#etf-hover{height:86px;min-height:86px;overflow:auto}</style>
+  <link rel="stylesheet" href="workspace-unified.css?v=6">
+  <script defer src="/pwa.js?v=1"></script>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page">
+    <section class="hero" id="etf-overview">
+      <p class="eyebrow">ETF COMPARISON</p>
+      <h1>ETF, 무엇이 다른지<br><em>같은 기준으로 비교해보세요</em></h1>
+      <p>시장가격, 실제 자산가치, 두 가격의 차이와 기간 수익률을<br>같은 기준으로 비교해보세요.</p>
+    </section>
+    <section class="panel" id="etf-select">
+      <div class="toolbar">
+        <label class="field wide search-host">ETF명 또는 종목코드
+          <input id="etf-search" placeholder="예: KODEX 200, 069500" autocomplete="off">
+          <div class="search-results" id="etf-results" hidden></div>
+        </label>
+        <label class="field">비교 기간
+          <select id="etf-period"><option value="1">1년</option><option value="3">3년</option><option value="5">5년</option><option value="max">최대(2020~)</option></select>
+        </label>
+        <button class="button" id="compare-etf">비교하기</button>
+      </div>
+      <div class="etf-discovery" id="etf-discovery">
+        <div class="etf-guide-column"><div><b>한국</b><span>국내 대표지수·산업</span></div><div class="etf-guide-list" data-etf-category="korea"></div></div>
+        <div class="etf-guide-column"><div><b>미국</b><span>미국 대표지수·테마</span></div><div class="etf-guide-list" data-etf-category="us"></div></div>
+        <div class="etf-guide-column"><div><b>글로벌</b><span>미국 외 해외시장</span></div><div class="etf-guide-list" data-etf-category="global"></div></div>
+        <div class="etf-guide-column"><div><b>자산군</b><span>채권·금·원자재·현금성</span></div><div class="etf-guide-list" data-etf-category="asset"></div></div>
+      </div>
+      <div class="selected-assets" id="selected-etfs"></div>
+      <div class="status" id="etf-status">ETF를 최대 6개까지 선택해 주세요.</div>
+    </section>
+    <section class="panel" id="etf-output" hidden>
+      <div class="section-row"><div><p class="eyebrow">LATEST KRX SNAPSHOT</p><h2>선택한 ETF를 한눈에 비교</h2></div><span class="tag" id="etf-basis"></span></div>
+      <p class="note">NAV는 ETF가 보유한 자산의 1주당 가치, 괴리율은 시장가격이 NAV보다 얼마나 높거나 낮은지를 뜻해요.</p>
+      <div class="table-scroll"><table class="comparison-table"><thead><tr><th>ETF</th><th>시장가격(종가)</th><th>하루 등락률</th><th>자산가치(NAV)</th><th>가격 차이(괴리율)</th><th>시가총액</th><th>순자산</th><th>거래량</th><th>따르는 지수</th></tr></thead><tbody id="etf-table"></tbody></table></div>
+      <div class="section-row chart-title-row"><div><p class="eyebrow">NORMALIZED PRICE RETURN</p><h2>같은 날 투자했다면 얼마나 달라졌을까요?</h2></div></div>
+      <div class="return-hover-panel" id="etf-hover"><span>그래프에 마우스를 올리면 날짜별 수익률을 이 영역에서 확인할 수 있습니다.</span></div>
+      <div class="chart etf-chart"><canvas id="etf-chart"></canvas></div>
+    </section>
+    <section class="panel note" id="etf-policy"><b>그래프를 읽을 때</b><br>이 수익률에는 분배금을 다시 투자한 효과, 세금, 거래 수수료가 빠져 있어요. 자산가치(NAV)와 시장가격의 차이(괴리율)는 거래소가 공개한 기준일 값으로, 실시간 값은 아닙니다. 실제 투자 전에는 운용사 자료에서 보수와 운용 방식을 확인해 주세요.</section>
+  </main>
+  <script type="module" src="etf.js?v=14"></script>
+</body>
+</html>

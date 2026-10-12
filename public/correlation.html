@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="기업·산업·매크로 데이터를 자유롭게 조합해 상관관계와 스트레스 구간을 검증하는 FinScope 데이터 실험실">
+  <meta name="theme-color" content="#2878f0">
+  <title>데이터 실험실 — FinScope</title>
+  <link rel="manifest" href="/app.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="pages.css?v=10">
+  <link rel="stylesheet" href="correlation.css?v=10">
+  <link rel="stylesheet" href="workspace-unified.css?v=6">
+  <script defer src="/pwa.js?v=1"></script>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page correlation-page">
+    <section class="hero correlation-hero" id="relationship-overview">
+      <p class="eyebrow">FINSCOPE DATA LAB</p>
+      <h1>두 데이터의 관계를<br><em>직접 확인해보세요</em></h1>
+      <p class="hero-copy">환율, 금리, 유가, 기업 수익률을 골라<br>두 값이 실제로 함께 움직였는지 확인할 수 있어요.</p>
+      <div class="hero-principles" aria-label="데이터 실험실 분석 원칙">
+        <span><b>01</b> 질문부터 고르기</span>
+        <span><b>02</b> 같은 기간으로 비교하기</span>
+        <span><b>03</b> 방향과 변화 읽기</span>
+      </div>
+    </section>
+
+    <section class="lab-start-panel" aria-labelledby="lab-start-title">
+      <div class="lab-start-title">
+        <div><p class="eyebrow">DATA LAB WORKSPACE</p><h2 id="lab-start-title">데이터 실험실</h2></div>
+        <p>궁금한 관계를 고른 뒤<br>결과와 해석을 한 화면에서 확인합니다.</p>
+      </div>
+      <nav class="lab-mode-grid" aria-label="데이터 실험실 분석 도구">
+        <a href="#analysis-settings"><span>01</span><b>두 데이터 비교</b><small>기업 주가와 경제지표도 비교할 수 있어요</small></a>
+        <a href="#industry-lab"><span>02</span><b>시장 변화와 업종 비교</b><small>환율·금리가 움직인 날 업종별 주가 흐름</small></a>
+        <a href="#lag-analysis"><span>03</span><b>누가 먼저 움직였을까?</b><small>먼저 움직인 쪽과 시간에 따른 변화</small></a>
+        <a href="#method-guide"><span>04</span><b>계산 방법과 자료 확인</b><small>숫자가 나온 방법과 주의할 점</small></a>
+      </nav>
+      <div class="beginner-guide" aria-label="데이터 실험실 사용 순서">
+        <div><b>1</b><span><strong>궁금한 질문을 고르세요</strong><small>예시를 누르면 데이터가 자동 선택됩니다.</small></span></div>
+        <i>→</i>
+        <div><b>2</b><span><strong>기간과 비교 방법을 확인하세요</strong><small>처음에는 기본값으로 시작해도 됩니다.</small></span></div>
+        <i>→</i>
+        <div><b>3</b><span><strong>결과가 얼마나 꾸준한지 보세요</strong><small>같은 달과 몇 달 뒤의 관계를 함께 봅니다.</small></span></div>
+      </div>
+      <p class="lab-caution"><b>해석할 때</b> 두 값이 함께 움직였어도 한쪽이 다른 쪽의 원인이라는 뜻은 아닙니다. 비교한 기간과 데이터 개수도 확인하세요.</p>
+    </section>
+
+    <section class="panel example-panel" id="analysis-examples">
+      <div><p class="eyebrow">START WITH A QUESTION</p><h2>어떤 관계가 궁금하세요?</h2><p>질문 예시를 고르면 필요한 데이터와 분석 방법이 자동으로 설정돼요.</p></div>
+      <div class="example-buttons">
+        <button type="button" data-example="fx-kr-rate"><b>환율이 오르면 국내 금리는?</b><span>원/달러 × 한국 기준금리</span></button>
+        <button type="button" data-example="fx-us-rate"><b>미국 금리와 원화 가치는 함께 움직일까?</b><span>원/달러 × 미국 기준금리</span></button>
+        <button type="button" data-example="oil-fx"><b>유가가 오르면 원화는 약해질까?</b><span>WTI × 원/달러</span></button>
+        <button type="button" data-example="stock-fx"><b>환율 상승은 삼성전자에 유리할까?</b><span>삼성전자 수익률 × 원/달러</span></button>
+        <button type="button" data-example="cpi-rate"><b>물가가 오르면 기준금리도 오를까?</b><span>소비자물가 × 한국 기준금리</span></button>
+        <button type="button" data-example="copper-electronics"><b>구리 가격은 전자업종 경기보다 먼저 움직일까?</b><span>구리 가격 × 전자업종 체감경기(BSI)</span></button>
+        <button type="button" data-example="bond-spread"><b>국채와 회사채 금리는 함께 움직일까?</b><span>국고채 3년 × 회사채 3년</span></button>
+        <button type="button" data-example="export-bsi"><b>수출이 늘면 전자업종 체감경기도 좋아질까?</b><span>수출 물량 × 전자업종 체감경기(BSI)</span></button>
+        <button type="button" data-example="emission-steel"><b>배출권 가격이 오르면 철강업종은?</b><span>배출권 가격 × 철강업종 수익률</span></button>
+        <button type="button" data-example="diesel-transport"><b>경유값이 오르면 운송업종은?</b><span>경유 가격 × 운송업종 수익률</span></button>
+        <button type="button" data-example="future-semiconductor"><b>반도체 선물은 업종보다 먼저 움직일까?</b><span>반도체 선물 × 반도체 업종지수</span></button>
+        <button type="button" data-example="esg-market"><b>ESG 대표기업은 전체 시장과 다르게 움직일까?</b><span>ESG 대표기업 지수 × 전체 시장</span></button>
+      </div>
+    </section>
+
+    <section class="panel industry-lab" id="industry-lab">
+      <div class="section-row industry-lab-head">
+        <div>
+          <p class="eyebrow">INDUSTRY STRESS LAB</p>
+          <h2>시장 변화와 업종 비교</h2>
+          <p>환율·금리 등 두 변화가 같은 날 나타났을 때, 업종별 주가 흐름이 어땠는지 비교해보세요. 업종별 성과는 KRX 업종지수로 계산합니다.</p>
+        </div>
+        <span class="lab-standard">업종 기준 · KRX</span>
+      </div>
+      <div class="stress-scenario">
+        <label class="stress-factor"><span>첫 번째 시장 변화</span><select id="lab-factor-a"><option value="usd-krw" selected>원/달러 환율</option><option value="us-dollar-index">미국 광의 달러지수</option><option value="wti">WTI 국제유가</option><option value="brent">브렌트유</option><option value="vix">VIX 변동성지수</option></select><select id="lab-factor-a-direction"><option value="up" selected>상승한 날</option><option value="down">하락한 날</option></select><small>환율·달러·유가·변동성 중 하나를 고르세요.</small></label>
+        <i>＋</i>
+        <label class="stress-factor"><span>두 번째 시장 변화</span><select id="lab-factor-b"><option value="kr-3y" selected>국고채 3년</option><option value="kr-base-rate">한국 기준금리</option><option value="kr-corp-3y">회사채 3년 AA-</option><option value="us-policy-rate">미국 기준금리 상단</option><option value="us-2y">미국 국채 2년</option><option value="us-10y">미국 국채 10년</option></select><select id="lab-factor-b-direction"><option value="up" selected>상승한 날</option><option value="down">하락한 날</option></select><small>한·미 금리 중 하나를 고르세요.</small></label>
+        <label class="field">분석 기간
+          <select id="lab-days"><option value="250" selected>최근 250거래일</option><option value="375">최근 375거래일</option><option value="500">최근 500거래일</option></select>
+        </label>
+      </div>
+      <div class="industry-picker-head">
+        <div><b>분석 업종 선택</b><span id="industry-count">불러오는 중</span></div>
+        <div><button type="button" class="text-button" id="industry-default">기본 8개</button><button type="button" class="text-button" id="industry-clear">비우기</button></div>
+      </div>
+      <div class="industry-picker" id="industry-picker"><div class="status">KRX 업종 목록을 불러오는 중입니다.</div></div>
+      <p class="classification-note" id="classification-note">업종 평균은 KRX 업종지수로 계산합니다. 아래의 대표기업은 이해를 돕기 위해 고른 기업이며, 실제 지수 구성종목과 다를 수 있습니다.</p>
+      <div class="lab-actions">
+        <button class="button" id="run-industry-lab">선택한 상황에서 비교하기</button>
+        <button class="button secondary" id="industry-csv" disabled>결과 내려받기</button>
+        <a class="mission-archive-link" href="/mission.html">환율·금리 동반 상승 분석 보기 ↗</a>
+      </div>
+      <div class="status" id="industry-lab-status">업종과 시장 변화를 고른 뒤 비교하기를 눌러주세요.</div>
+      <div id="industry-lab-result" hidden>
+        <div class="industry-summary" id="industry-summary"></div>
+        <p class="industry-reading" id="industry-reading" aria-live="polite"></p>
+        <div class="industry-result-grid">
+          <article class="industry-chart-wrap"><h3>두 변화가 겹친 날, 업종은 어땠나요?</h3><canvas id="industry-stress-chart"></canvas><p>막대는 두 변화가 같은 날 일어났을 때 업종지수의 하루 평균 수익률입니다. 오른쪽일수록 높은 업종이에요.</p></article>
+          <article class="industry-table-wrap"><h3>업종별 결과 비교</h3><div class="table-scroll"><table><thead><tr><th>순위</th><th>KRX 업종</th><th>겹친 날 평균<small>업종지수 · 하루</small></th><th>평균 차이<small>겹치지 않은 날과 비교 · %p</small></th><th>대표기업 평균<small>주가 수익률 · 최대 3곳</small></th></tr></thead><tbody id="industry-lab-body"></tbody></table></div><p class="industry-table-note">‘겹치지 않은 날’에는 두 변화 중 하나만 일어난 날도 포함돼요. 대표기업 평균은 데이터가 있는 기업별 하루 평균을 다시 평균한 값입니다. 업종지수 구성종목의 공식 평균은 아니에요.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel analysis-controls" id="analysis-settings">
+      <div class="analysis-focus-bar">
+        <div><b>분석 결과</b><span id="analysis-focus-summary">지표를 고르고 결과부터 확인하세요.</span></div>
+        <div class="analysis-focus-actions">
+          <button type="button" class="button secondary" id="toggle-analysis-controls">설정 변경</button>
+          <button type="button" class="button back-button" id="leave-analysis-focus">← 질문부터 다시 보기</button>
+        </div>
+      </div>
+      <div class="guided-context" id="guided-context" hidden></div>
+      <div class="toolbar">
+        <label class="field">분석 유형
+          <select id="analysis-mode">
+            <option value="company-macro">기업 주가 × 경제지표</option>
+            <option value="macro-macro">경제지표 × 경제지표</option>
+          </select>
+        </label>
+        <label class="field wide search-host" id="company-field">분석 기업
+          <input id="company-search" placeholder="예: 삼성전자, 005930" autocomplete="off">
+          <div class="search-results" id="company-results" hidden></div>
+        </label>
+        <label class="field" id="series-a-field" hidden>첫 번째 지표
+          <select id="series-a"><option value="usd-krw">지표 목록 불러오는 중</option></select>
+        </label>
+        <label class="field" id="series-b-field"><span id="series-b-label">비교할 지표</span>
+          <select id="macro-series"><option value="kr-base-rate">지표 목록 불러오는 중</option></select>
+        </label>
+        <label class="field">비교 방법
+          <select id="correlation-method">
+            <option value="pearson">피어슨 · 선형 관계</option>
+            <option value="spearman">스피어만 · 순위 관계</option>
+          </select>
+        </label>
+        <label class="field">분석 기간
+          <select id="analysis-years"><option value="3">3년</option><option value="5" selected>5년</option><option value="8">8년</option><option value="10">10년</option><option value="15">최대 15년</option></select>
+        </label>
+        <label class="field">관계 변화를 볼 기간
+          <select id="rolling-window"><option value="12">12개월</option><option value="24" selected>24개월</option><option value="36">36개월</option></select>
+        </label>
+        <button class="button" id="run-analysis">분석하기</button>
+        <button class="button secondary" id="correlation-csv" disabled>CSV 내보내기</button>
+      </div>
+      <div class="series-context" id="series-context"></div>
+      <div id="analysis-status" class="status">기업과 경제지표를 고르거나, 경제지표 두 개를 골라 비교할 수 있어요.</div>
+    </section>
+
+    <section id="analysis-result" hidden>
+      <article class="analysis-insight" id="analysis-insight">
+        <span>한 줄 결론</span><b id="analysis-insight-title"></b><p id="analysis-insight-detail"></p>
+      </article>
+      <div class="grid result-cards" id="result-cards"></div>
+      <div class="analysis-grid">
+        <article class="panel chart-panel" id="scatter-analysis">
+          <div class="section-row"><div><p class="eyebrow">SCATTER PLOT</p><h2>한 달씩 찍어 본 두 값</h2></div><span class="tag" id="scatter-label"></span></div>
+          <div class="chart-tooltip-host"><canvas id="scatter-chart" aria-label="선택한 두 값의 월별 관계를 점으로 표시한 그래프"></canvas><div class="floating-tip" id="scatter-tip" hidden></div></div>
+          <p class="insight-copy" id="scatter-summary"></p>
+          <p class="note">점 하나는 한 달입니다. 빨간 선이 위로 가면 같은 방향, 아래로 가면 반대 방향의 관계입니다.</p>
+        </article>
+        <div class="analysis-side">
+          <article class="panel matrix-panel" id="matrix-analysis">
+            <div class="section-row"><div><p class="eyebrow">CORRELATION MATRIX</p><h2>두 지표의 관계</h2></div></div>
+            <div class="matrix-grid" id="correlation-matrix"></div>
+            <p class="insight-copy" id="matrix-summary"></p>
+            <p class="note">대각선 1.00은 같은 지표끼리 비교한 값이라 분석 대상이 아닙니다.</p>
+          </article>
+          <article class="panel lag-panel" id="lag-analysis">
+            <div class="section-row"><div><p class="eyebrow">LAG CHECK</p><h2>누가 먼저 움직였나요?</h2></div></div>
+            <div id="lag-bars" class="lag-bars"></div>
+            <p class="insight-copy" id="lag-summary"></p>
+            <p class="note">0개월은 같은 달입니다. +3개월은 첫 번째 지표가 움직인 뒤 3개월 후 두 번째 지표를 비교했다는 뜻입니다. 인과관계 증명은 아닙니다.</p>
+          </article>
+        </div>
+      </div>
+      <article class="panel rolling-panel" id="rolling-analysis">
+        <div class="section-row"><div><p class="eyebrow">ROLLING CORRELATION</p><h2>시간이 지나도 관계가 같았나요?</h2></div><span class="tag" id="rolling-label"></span></div>
+        <div class="chart-tooltip-host"><canvas id="rolling-chart" aria-label="시간에 따라 달라지는 두 지표의 관계 그래프"></canvas><div class="floating-tip" id="rolling-tip" hidden></div></div>
+        <p class="insight-copy" id="rolling-summary">선택한 기간만큼의 데이터를 한 달씩 옮겨가며 관계를 다시 계산합니다.</p>
+        <p class="note">마우스를 그래프에 올리면 해당 시점의 상관계수와 관계 강도를 볼 수 있어요.</p>
+      </article>
+      <article class="panel method-panel" id="method-guide">
+        <div class="method-heading"><div><p class="eyebrow">METHOD</p><h2>이 숫자는 어떻게 계산했나요?</h2></div><span>미래 예측이 아닌 과거 데이터 계산</span></div>
+        <ol>
+          <li>두 지표를 같은 달에 맞추고, 양쪽 값이 모두 있는 달만 사용합니다.</li>
+          <li>금리·경기 심리지수는 지난달과의 차이, 환율·주가는 한 달 변화율, 물가·생산·수출 지수는 1년 전 같은 달과의 차이를 씁니다.</li>
+          <li>두 값이 함께 움직이는지, 값의 크기 순서도 비슷한지 각각 살펴봅니다.</li>
+          <li>같은 달뿐 아니라 6개월 전후의 관계와, 12·24·36개월씩 기간을 옮겨 계산한 관계도 보여줍니다.</li>
+        </ol>
+        <div class="method-cards"><article><b>함께 오르고 내렸나요? (피어슨)</b><p>두 값이 직선에 가까운 형태로 함께 움직이는지 봅니다. 아주 큰 값 몇 개의 영향을 받을 수 있어요.</p></article><article><b>순서도 비슷했나요? (스피어만)</b><p>실제 숫자 대신 크기 순서를 비교합니다. 직선이 아니어도 한 방향으로 움직이는 관계를 살펴볼 수 있어요.</p></article><article><b>얼마나 달라졌나요? (기울기·R²)</b><p>첫 번째 지표가 1단위 변할 때 두 번째 지표가 평균 얼마나 달라지는지와, 이 직선이 변화를 얼마나 설명하는지 봅니다.</p></article><article><b>먼저 움직이거나 관계가 바뀌었나요?</b><p>서로 다른 달을 비교하고, 기간을 옮겨가며 관계를 다시 계산합니다. 먼저 움직였다고 원인이라는 뜻은 아니에요.</p></article></div>
+        <details><summary>파이썬으로도 가능한가요?</summary><pre><code>aligned = pd.concat([stock_return, macro_change], axis=1).dropna()
+r = aligned.corr(method="pearson").iloc[0, 1]   # 또는 method="spearman"
+beta = np.cov(aligned.iloc[:, 1], aligned.iloc[:, 0], ddof=1)[0, 1] / aligned.iloc[:, 1].var(ddof=1)</code></pre></details>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="correlation.js?v=12"></script>
+  <script type="module" src="industry-lab.js?v=6"></script>
+</body>
+</html>

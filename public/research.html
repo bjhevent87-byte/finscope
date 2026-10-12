@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2878f0">
+  <title>리서치 허브 — FinScope</title>
+  <link rel="manifest" href="/app.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="pages.css?v=14">
+  <link rel="stylesheet" href="workspace-unified.css?v=6">
+  <script defer src="/pwa.js?v=1"></script>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">RESEARCH HUB</p>
+      <h1>공식 원문과 리서치를<br><em>한곳에서 확인하세요</em></h1>
+      <p>기업을 고르면 공개된 리서치와 공식 공시 링크를 모아 보여드려요.<br>중요한 내용은 반드시 원문에서 확인하세요.</p>
+    </section>
+    <section class="panel">
+      <div class="toolbar"><label class="field wide search-host">기업 검색<input id="search" placeholder="기업명 또는 종목코드"><div class="search-results" id="results" hidden></div></label></div>
+      <div id="status" class="status">기업을 선택하면 바로가기 링크가 만들어집니다.</div>
+      <div id="links" class="links"></div>
+    </section>
+    <section class="panel note"><b>제한 사항</b><br>증권사 리서치 원문은 저작권·로그인·재배포 조건이 서로 달라 자동 수집하여 본문을 저장하지 않습니다. 공개 검색·공식 원문 링크를 제공하고, 사용자가 원문에서 목표주가·추정치·작성일을 직접 확인하도록 설계했습니다.</section>
+  </main>
+  <script type="module" src="research.js?v=9"></script>
+</body>
+</html>

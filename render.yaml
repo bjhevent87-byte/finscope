@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: investment-screener
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev && npm test
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPEN_DART_API_KEY
+        sync: false
+      - key: DATA_GO_KR_SERVICE_KEY
+        sync: false
+      - key: KRX_AUTH_KEY
+        sync: false
+      - key: ECOS_API_KEY
+        sync: false
+      - key: KOREA_EXIM_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: CACHE_TTL_MINUTES
+        value: 360
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 60

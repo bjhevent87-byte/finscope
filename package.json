@@ -1,0 +1,15 @@
+{
+  "name": "investment-compass-screener",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "build:data": "node scripts/build-company-data.mjs",
+    "test": "node --test scripts/*.test.mjs"
+  }
+}

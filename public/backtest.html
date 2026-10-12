@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#2878f0"><title>자산배분 백테스트 — FinScope</title><link rel="manifest" href="/app.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/icon-192.png"><link rel="stylesheet" href="pages.css?v=11"><link rel="stylesheet" href="workspace-unified.css?v=6"><script defer src="/pwa.js?v=1"></script></head>
+<body><div id="nav"></div><main class="page">
+<section class="hero" id="backtest-overview"><p class="eyebrow">PORTFOLIO BACKTEST</p><h1>내가 고른 주식·ETF를<br><em>그때 샀다면 어땠을까요?</em></h1><p>각 상품에 얼마씩 나눠 살지 정한 뒤, 과거 가격으로 계산한 결과를 KOSPI 200과 비교해보세요.<br>과거 결과는 미래 수익을 보장하지 않아요.</p></section>
+<section class="panel" id="backtest-builder">
+  <div class="template-box"><div><b>비중을 정하는 예시</b><span>구성을 살펴보는 교육용 예시예요. 투자 추천은 아닙니다.</span></div><button class="button secondary" data-template="6040">주식 60%·채권 40%</button><button class="button secondary" data-template="permanent">네 자산에 똑같이 나누기</button><button class="button secondary" data-template="allweather">주식·채권·현금·금 섞기</button><button class="button secondary" data-template="clear">비우기</button></div>
+  <div class="toolbar"><label class="field wide search-host">주식·ETF 추가<input id="search" placeholder="예: 삼성전자, KODEX 200, 069500"><div class="search-results" id="results" hidden></div></label><button class="button" id="run">과거 결과 보기</button></div>
+  <div class="weights" id="weights"></div><div id="status" class="status">주식·ETF를 추가하고 비중 합계를 100%로 맞춰 주세요.</div><div class="grid" id="summary"></div><div class="chart"><canvas id="chart"></canvas><div class="floating-tip" id="chart-tip" hidden></div></div>
+</section>
+<section class="panel note" id="backtest-policy"><b>결과는 이렇게 계산했어요</b><br>처음에 100만원을 투자해 선택한 주식·ETF를 사서 그대로 보유한 것으로 가정했어요. 같은 날짜의 KOSPI 200과 비교합니다. 배당·분배금을 다시 투자한 효과, 세금, 거래 수수료, 실제 주문가격과 종가의 차이, 환헤지 비용, 정기적인 비중 조정은 포함하지 않았어요.</section>
+</main><script type="module" src="backtest.js?v=13"></script></body></html>

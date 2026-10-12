@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="원화 약세와 국고채 3년 금리 상승 시 8개 산업과 대표기업의 250거래일 성과를 비교하는 FinScope 리포트">
+  <meta name="theme-color" content="#2878f0">
+  <title>환율·금리 동반 상승일 업종 비교 — FinScope</title>
+  <link rel="manifest" href="/app.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="pages.css?v=10">
+  <link rel="stylesheet" href="mission.css?v=2">
+  <link rel="stylesheet" href="workspace-unified.css?v=6">
+  <script defer src="/pwa.js?v=1"></script>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page mission-page">
+    <section class="hero mission-hero" id="mission-overview">
+      <p class="eyebrow">RATE · FX INDUSTRY STRESS TEST</p>
+      <h1>환율과 금리가 함께 오른 날,<br><em>어느 업종의 수익률이 높았을까요?</em></h1>
+      <p>원/달러 환율과 국고채 3년 금리가 같은 날 오른 거래일을 골라 8개 KRX 업종지수와 대표기업 주가를 비교합니다.</p>
+      <div class="mission-requirements"><span>8개 업종</span><span>대표기업 최대 24곳</span><span>250거래일 이상</span><span>공식 자료</span></div>
+    </section>
+
+    <section class="panel mission-controls">
+      <div class="toolbar">
+        <label class="field">분석 거래일
+          <select id="mission-days"><option value="250" selected>최근 250거래일</option><option value="375">최근 375거래일</option><option value="500">최근 500거래일</option></select>
+        </label>
+        <button class="button" id="run-mission">결과 보기</button>
+        <button class="button secondary" id="mission-csv" disabled>CSV 내보내기</button>
+      </div>
+      <p class="status" id="mission-status">공식 데이터를 불러와 환율과 금리가 함께 오른 날의 업종별 흐름을 비교합니다.</p>
+    </section>
+
+    <section id="mission-result" hidden>
+      <div class="grid mission-kpis" id="mission-kpis"></div>
+      <article class="panel conclusion-panel">
+        <div><p class="eyebrow">RULE-BASED CONCLUSION</p><h2>분석 결론</h2></div>
+        <div id="mission-conclusion" class="conclusion-grid"></div>
+      </article>
+
+      <section class="mission-visual-grid" id="mission-chart">
+        <article class="panel">
+          <div class="section-row"><div><p class="eyebrow">CONDITION DAY RETURN</p><h2>환율·금리가 함께 오른 날, 업종은 어땠나요?</h2></div><span class="tag">하루 평균 수익률</span></div>
+          <canvas id="stress-chart" aria-label="환율과 금리가 함께 오른 날의 업종지수 하루 평균 수익률 순위"></canvas>
+          <p class="note">원/달러 환율과 국고채 3년 금리가 같은 날 모두 오른 거래일만 모았습니다. 막대는 업종지수의 하루 수익률 평균이며, 초록색은 상위 3개, 붉은색은 하위 3개 업종입니다.</p>
+        </article>
+        <article class="panel">
+          <div class="section-row"><div><p class="eyebrow">CORRELATION MAP</p><h2>업종은 환율·금리와 함께 움직였나요?</h2></div><span class="tag">우상단 = 두 지표와 같은 방향</span></div>
+          <canvas id="factor-chart" aria-label="환율과 금리에 대한 산업 수익률 상관관계 지도"></canvas>
+          <p class="note">오른쪽일수록 환율이 오를 때 업종지수도 오르는 경향이, 위쪽일수록 금리가 오를 때 업종지수도 오르는 경향이 있었어요. 위치는 함께 움직인 방향일 뿐, 원인과 결과를 뜻하지는 않습니다.</p>
+        </article>
+      </section>
+
+      <article class="panel" id="industry-ranking">
+        <div class="section-row"><div><p class="eyebrow">INDUSTRY RANKING</p><h2>8개 산업 비교표</h2></div><span class="tag" id="ranking-period"></span></div>
+        <p class="mission-reading" id="mission-reading" aria-live="polite"></p>
+        <div class="table-scroll"><table class="mission-table"><thead><tr><th>순위</th><th>업종</th><th>순위 구간</th><th>함께 오른 날<small>업종지수 하루 평균</small></th><th>함께 오르지 않은 날<small>업종지수 하루 평균</small></th><th>평균 차이<small>앞의 두 값 · %p</small></th><th>환율과의 관계</th><th>금리와의 관계</th><th>업종지수도 오른 비율</th><th>전체기간 수익률</th><th>대표기업 평균<small>주가 수익률 · 최대 3곳</small></th></tr></thead><tbody id="industry-body"></tbody></table></div>
+        <p class="mission-table-note">‘함께 오르지 않은 날’에는 환율이나 금리 중 하나만 오른 날도 들어갑니다. 대표기업 평균은 데이터가 있는 기업별 하루 평균을 다시 평균한 값이며, 업종지수 구성종목의 공식 평균은 아닙니다.</p>
+      </article>
+
+      <article class="panel" id="company-check">
+        <div class="section-row"><div><p class="eyebrow">COMPANY CROSS-CHECK</p><h2>대표기업 주가도 비슷했나요?</h2></div><span class="tag">업종별 최대 3곳</span></div>
+        <div class="company-grid" id="company-grid"></div>
+      </article>
+
+      <article class="panel method-panel" id="mission-method">
+        <div class="section-row"><div><p class="eyebrow">METHOD & LIMITS</p><h2>어떻게 계산했나요?</h2></div><span class="tag">정해진 계산식 사용 · AI 판단 없음</span></div>
+        <div class="method-grid">
+          <article><b>① 어떤 날을 골랐나요?</b><p>원/달러 환율과 국고채 3년 금리가 같은 날 모두 오른 거래일을 골랐습니다.</p></article>
+          <article><b>② 업종은 어떻게 비교했나요?</b><p>함께 오른 날의 업종지수 하루 평균을 기준으로 정렬하고, 함께 오르지 않은 날의 평균과도 비교했습니다.</p></article>
+          <article><b>③ 기업은 어떻게 비교했나요?</b><p>대표기업마다 함께 오른 날의 주가 수익률 평균을 구한 뒤, 데이터가 있는 기업들의 평균을 다시 냈습니다.</p></article>
+          <article><b>④ 해석 한계</b><p>상관관계와 조건부 평균은 인과관계를 증명하지 않습니다. 표본 수, 기간, 기업 선정에 따라 결과가 달라집니다.</p></article>
+        </div>
+        <p class="source-note" id="mission-sources"></p>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="mission.js?v=6"></script>
+</body>
+</html>

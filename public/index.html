@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DART·KRX·금융위원회 데이터 기반 장기 투자 의사결정 스크리너" />
+    <meta name="theme-color" content="#2878f0" />
+    <title>FinScope — 데이터 기반 투자 분석</title>
+    <link rel="manifest" href="/app.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=11" />
+    <link rel="stylesheet" href="ui-v7.css?v=12" />
+    <link rel="stylesheet" href="pages-v11.css?v=16" />
+    <link rel="stylesheet" href="tooltips.css?v=5" />
+    <link rel="stylesheet" href="limitations.css?v=5" />
+    <link rel="stylesheet" href="workspace-unified.css?v=6" />
+    <script defer src="/pwa.js?v=1"></script>
+  </head>
+  <body class="workspace-navigation">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">F</span><span><b>FinScope</b><small>핀스코프</small></span></a>
+      <nav><a href="/">홈</a><a href="/correlation.html">데이터 실험실</a><a class="active" href="/index.html">기업 비교</a><a href="/company.html">기업 분석</a><a href="/filings.html">DART 공시</a><a href="/research.html">리서치</a><a href="/backtest.html">백테스트</a><a href="/etf.html">ETF 비교</a></nav>
+      <span class="data-badge"><i></i> DART · KRX · 금융위원회</span>
+    </header>
+    <aside class="workspace-side">
+      <p>기업 비교</p>
+      <a class="active" href="#top"><span>◎</span>비교 시작하기</a><a href="#discovery"><span>⌕</span>기업 고르기</a><a href="#criteria"><span>⚙</span>내 조건 정하기</a><a href="#results"><span>▦</span>결과 비교하기</a><a href="#data-policy"><span>!</span>데이터 기준</a>
+      <div class="workspace-side-note"><b>비교하는 순서</b><span>조건을 먼저 정한 뒤 후보를 고르면 비교가 훨씬 쉬워요.</span></div>
+    </aside>
+
+    <main id="top">
+      <section class="hero shell">
+        <p class="eyebrow">SMART COMPANY SCREENER</p>
+        <h1>내 조건에 맞는 기업을<br /><em>한눈에 비교해보세요</em></h1>
+        <p class="hero-copy">수익성, 재무 안정성, 주가 흐름을 나눠 보고<br />내 조건을 통과한 기업만 비교해보세요.</p>
+        <div class="hero-principles" id="principles">
+          <span><b>01</b> 재무 상태 보기</span><span><b>02</b> 가격 흐름 보기</span><span><b>03</b> 위험도 확인하기</span>
+        </div>
+      </section>
+
+      <section class="workspace shell" id="compare">
+        <div class="section-title">
+          <div><p class="eyebrow">COMPANY SCREENER</p><h2>기업 비교</h2></div>
+          <p>조건으로 후보를 좁힌 뒤<br />최대 10개 기업을 깊게 비교합니다.</p>
+        </div>
+
+        <div class="workflow-guide" aria-label="기업 스크리닝 사용 순서">
+          <div class="active"><b>1</b><span><strong>조건 만들기</strong><small>원하는 재무 기준을 설정</small></span></div>
+          <i>→</i>
+          <div><b>2</b><span><strong>후보 찾기</strong><small>조건 통과 기업만 선별</small></span></div>
+          <i>→</i>
+          <div><b>3</b><span><strong>비교함 담기</strong><small>최대 10개 기업 선택</small></span></div>
+          <i>→</i>
+          <div><b>4</b><span><strong>표와 그래프로 비교</strong><small>고른 기업을 같은 기준으로 비교</small></span></div>
+        </div>
+
+        <section class="discovery-panel" id="discovery">
+          <div class="panel-heading">
+            <div><span class="step-badge">02</span><div><h3>조건에 맞는 기업 찾기</h3><p>시장과 업종을 고르면, 내가 정한 조건에 맞는 기업을 찾아줍니다.</p></div></div>
+            <button class="ghost-button" id="discover-button">목록 새로고침</button>
+          </div>
+          <div class="discovery-controls">
+            <label>시장<select id="market-select"><option>KOSPI</option><option>KOSDAQ</option></select></label>
+            <label>업종<select id="industry-select"><option value="all">전체 업종</option></select></label>
+            <label>표시 개수<select id="leader-count"><option value="10">10개</option><option value="20" selected>20개</option><option value="30">30개</option><option value="50">50개</option><option value="100">최대 100개</option></select></label>
+          </div>
+          <div class="screen-actions">
+            <button class="primary-button" id="screen-button" type="button">조건에 맞는 기업 찾기</button>
+            <span id="screen-status">아래에서 조건을 정한 뒤 기업을 찾아보세요.</span>
+          </div>
+          <div class="leader-list" id="leader-list"><p>시장과 업종별 상위 기업 목록을 준비하고 있습니다.</p></div>
+        </section>
+
+        <div class="search-panel">
+          <span class="step-badge">02+</span>
+          <label for="company-search">이미 알고 있는 기업은 바로 검색</label>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.4-4.4m2.4-5.1a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+            <input id="company-search" autocomplete="off" placeholder="예: 삼성전자, 005930" />
+          </div>
+          <div class="search-results" id="search-results" hidden></div>
+        </div>
+
+        <div class="selected-row">
+          <span class="selected-count"><i class="step-badge">03</i> 비교함 <b id="selected-count">2</b>/10</span>
+          <div class="selected-companies" id="selected-companies"></div>
+          <button class="clear-button" id="clear-selected" type="button">전체 비우기</button>
+          <label class="year-control">보고서 <select id="report-select"><option value="11011">4분기·연간(사업보고서)</option><option value="11013">1분기</option><option value="11012">반기</option><option value="11014">3분기</option></select></label>
+          <label class="year-control">기준연도 <select id="year-select"></select></label>
+          <button class="primary-button" id="run-button">분석하기 <span>→</span></button>
+          <p class="period-help">DART는 4분기보고서를 별도로 제공하지 않습니다. 4분기까지 합산한 연간 실적은 사업보고서에서 확인합니다.</p>
+        </div>
+
+        <div class="metric-picker">
+          <span>조건과 함께 보는 차트 지표</span>
+          <div id="metric-buttons"></div>
+        </div>
+
+        <section class="criteria-panel" id="criteria">
+          <div class="panel-heading compact">
+            <div><span class="step-badge">01</span><div><h3>나만의 투자 조건</h3><p>원하는 기준을 추가하면 기업 찾기와 결과표에 똑같이 적용됩니다.</p></div></div>
+            <button class="ghost-button" id="add-criterion">+ 조건 추가</button>
+          </div>
+          <div class="criteria-list" id="criteria-list"></div>
+          <label class="filter-toggle"><input type="checkbox" id="filter-passed" checked /> 조건 통과 기업만 카드·표·모든 차트에 표시</label>
+          <details class="metric-catalog criterion-catalog" open><summary>조건에 사용할 재무·시장 지표 선택</summary><div id="criterion-catalog"></div></details>
+        </section>
+
+        <div class="status-panel" id="status-panel">
+          <div class="spinner"></div><span>데이터 연결을 확인하고 있습니다.</span>
+        </div>
+
+        <section class="results" id="results" hidden>
+          <div class="results-heading">
+            <div><p id="result-kicker">연결 기준</p><h3 id="result-title">재무 비교</h3></div>
+            <button class="ghost-button" id="csv-button">CSV 내려받기</button>
+          </div>
+
+          <div class="decision-grid" id="decision-grid"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr id="table-head"></tr></thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div><p class="chart-label">DISCLOSED TREND</p><h3 id="chart-title">영업이익률 추이</h3></div>
+              <div class="chart-controls">
+                <div class="inline-metrics" id="chart-metric-buttons"></div>
+                <button class="chart-mode active" data-chart-mode="financial">재무 추이</button>
+                <button class="chart-mode" data-chart-mode="price">주가·이동평균선</button>
+                <select id="financial-scale" aria-label="재무 차트 축 범위"><option value="readable">변화 확대</option><option value="full">전체 범위</option></select>
+                <select id="price-company-select" hidden aria-label="주가 차트 기업 선택"></select>
+                <select id="price-period" hidden aria-label="주가 차트 기간"><option value="1">1년</option><option value="3">3년</option><option value="5">5년</option><option value="max">최대</option></select>
+                <label class="ma-control" id="ma-control" hidden>이동평균선 <input id="ma-periods" value="5, 20, 60, 120" inputmode="numeric" aria-label="이동평균선 기간" /><button id="apply-ma" type="button">적용</button></label>
+              </div>
+            </div>
+            <div class="legend" id="chart-legend"></div>
+            <p class="chart-instruction">차트 위에 마우스를 올리면 해당 시점의 값이 선 위의 원과 작은 설명창으로 표시됩니다.</p>
+            <div class="chart-wrap"><canvas id="trend-chart"></canvas><div class="canvas-tooltip" id="trend-tooltip" hidden></div></div>
+          </div>
+          <div class="chart-card return-card">
+            <div class="chart-header"><div><p class="chart-label">PRICE RETURN</p><h3>같은 기간에 누가 더 올랐나요?</h3><small class="chart-help">모두 시작점을 0%로 맞춘 뒤 비교해요. 실선은 기업·시장, 점선은 같은 업종의 주요 기업 평균입니다.</small></div><div class="chart-controls"><select id="return-period" aria-label="수익률 비교 기간"><option value="1">1년</option><option value="3">3년</option><option value="5">5년</option><option value="max">최대(2020~)</option></select><button class="chart-mode" id="return-reset" type="button">확대 초기화</button></div></div>
+            <div class="legend" id="return-chart-legend"></div>
+            <p class="chart-instruction">실선은 기업, 점선은 같은 업종입니다. 마우스를 올리면 같은 날짜의 수익률을 작은 설명창에서 비교합니다.</p>
+            <div class="chart-wrap"><canvas id="return-chart"></canvas><div class="canvas-tooltip canvas-tooltip-wide" id="return-tooltip" hidden></div></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="notice shell" id="data-policy">
+        <strong>데이터 이용 및 면책</strong>
+        <div>
+          <p>이 서비스는 DART·KRX·금융위원회 공개 데이터를 활용한 교육·정보 제공용 1차 스크리닝 도구이며, 특정 금융상품의 매수·매도 또는 투자 권유를 목적으로 하지 않습니다. 투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.</p>
+          <ul>
+            <li><b>기준 시점:</b> 재무정보는 선택한 공시 보고서, 주가는 금융위원회 API에서 확인되는 최근 일별 가격을 사용합니다. 각 가격의 기준일은 결과표에 별도로 표시합니다.</li>
+            <li><b>가격 차이:</b> 제공기관의 집계 범위와 갱신 시점에 따라 네이버증권 등 다른 서비스의 정규장·NXT·애프터마켓 가격과 다를 수 있습니다.</li>
+            <li><b>재무 범위:</b> 발표된 DART 보고서만 반영하며 추정 실적·컨센서스는 포함하지 않습니다. 업종별 회계 차이와 일회성 손익은 원문 공시에서 재확인해야 합니다.</li>
+            <li><b>업종 비교:</b> DART 산업코드를 원자료로 보존하고 KRX 업종지수에 가까운 공통 분류로 변환합니다. 같은 분류의 KRX 시가총액 상위 5개사 중앙값이며 공식 지수 구성종목을 뜻하지 않습니다.</li>
+            <li><b>산식 한계:</b> ROE·PER·PBR·FCF는 공개 계정으로 단순 계산한 참고값이며 업종별 조정 전 수치입니다.</li>
+            <li><b>금융업:</b> 은행·보험·금융지주의 공시 수치는 숨기지 않고 표시합니다. 다만 일반기업식 매출·영업이익률·FCF·부채비율은 비교 적합성이 낮으므로 ROE·순이익·PER·PBR 및 BIS·CET1·NIM을 함께 확인해야 합니다.</li>
+            <li><b>해석 한계:</b> 미래 주가, 매수·매도 시점, 가격 변동 원인 및 장기 투자성과를 예측하지 않습니다. 상관관계를 인과관계로 해석해서는 안 됩니다.</li>
+            <li><b>개인정보:</b> 별도 회원가입이나 개인정보 수집 없이 동작하며, 사용자가 만든 조건은 해당 브라우저에만 저장됩니다.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>© 2026 FinScope</span><span><a href="#data-policy">데이터 이용 및 면책</a> · 좋은 기업 ≠ 언제나 좋은 투자</span></footer>
+    <script type="module" src="app.js?v=17"></script>
+  </body>
+</html>

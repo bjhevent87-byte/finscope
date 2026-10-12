@@ -1,0 +1,8 @@
+.env
+.cache/
+node_modules/
+.runtime/
+reports/
+/*.png
+*.log
+.DS_Store

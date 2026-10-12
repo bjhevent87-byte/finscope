@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2878f0">
+  <title>DART 공시 — FinScope</title>
+  <link rel="manifest" href="/app.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="pages.css?v=14">
+  <link rel="stylesheet" href="workspace-unified.css?v=6">
+  <script defer src="/pwa.js?v=1"></script>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">DART DISCLOSURES</p>
+      <h1>필요한 공시만<br><em>빠르게 찾아보세요</em></h1>
+      <p>기업과 기간을 고르면 사업보고서와 주요 공시를 모아 보여드려요.<br>필요한 원문으로 바로 이동할 수 있어요.</p>
+    </section>
+    <section class="panel">
+      <div class="toolbar">
+        <label class="field wide search-host">기업 검색<input id="search" placeholder="기업명 또는 종목코드"><div class="search-results" id="results" hidden></div></label>
+        <label class="field">시작일<input id="begin" type="date"></label>
+        <label class="field">종료일<input id="end" type="date"></label>
+      </div>
+      <div id="company-summary" class="company-context" hidden></div>
+      <div class="filter-grid">
+        <label class="field">공시유형<select id="type"><option value="">전체 공시</option><option value="A">정기공시</option><option value="B">주요사항보고</option><option value="C">발행공시</option><option value="D">지분공시</option><option value="E">기타공시</option><option value="F">외부감사관련</option><option value="G">펀드공시</option><option value="H">자산유동화</option><option value="I">거래소공시</option><option value="J">공정위공시</option></select></label>
+        <label class="field">세부유형<select id="detail"><option value="">전체 세부유형</option></select></label>
+        <label class="check-field"><input id="final-only" type="checkbox"> 최종보고서만 보기</label>
+        <button class="button" id="run">공시 조회</button>
+        <a class="button secondary link-button" id="dart-direct" href="https://dart.fss.or.kr" target="_blank" rel="noopener">DART에서 직접 보기 ↗</a>
+      </div>
+      <div id="status" class="status">기업을 검색해 선택해 주세요.</div>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+  <script type="module" src="filings.js?v=12"></script>
+</body>
+</html>
