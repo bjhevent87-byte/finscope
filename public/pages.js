@@ -1,7 +1,7 @@
 export const $=(s)=>document.querySelector(s);
 if(!document.querySelector('link[data-finscope-fonts]'))document.head.insertAdjacentHTML("beforeend",'<link data-finscope-fonts rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">');
 document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="ui-v7.css?v=16">');
-document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="pages-v11.css?v=16">');
+document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="pages-v11.css?v=17">');
 document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="workspace-refresh.css?v=2">');
 document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="workspace-unified.css?v=6">');
 export const money=(v)=>{if(!Number.isFinite(v))return"공시 계정 없음";const a=Math.abs(v),s=v<0?"-":"";if(a>=1e12)return`${s}${(a/1e12).toFixed(a>=1e14?0:1)}조`;if(a>=1e8)return`${s}${(a/1e8).toFixed(0)}억`;return`${Math.round(v).toLocaleString("ko-KR")}원`};

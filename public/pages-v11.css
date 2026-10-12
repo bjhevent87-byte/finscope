@@ -13,14 +13,14 @@
 .etf-guide-column>div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px}
 .etf-guide-column>div:first-child b{font-size:15px}
 .etf-guide-column>div:first-child span{color:#8b95a1;font-size:10px}
-.etf-guide-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.etf-guide-item{display:flex;align-items:center;min-width:0;padding:9px;border:1px solid #e5e8eb;border-radius:10px;background:#fff;text-align:left;cursor:pointer}
+.etf-guide-list{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.etf-guide-item{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:11px 12px;border:1px solid #e5e8eb;border-radius:10px;background:#fff;text-align:left;cursor:pointer}
 .etf-guide-item:hover{border-color:#8bbcff;background:#eef6ff}
-.etf-guide-item>span{min-width:0}.etf-guide-item b,.etf-guide-item small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.etf-guide-item b{font-size:11px}.etf-guide-item small{margin-top:3px;color:#8b95a1;font-size:9px}
-.etf-guide-item em{margin-left:auto;color:#3182f6;font-size:9px;font-style:normal;font-weight:700}
+.etf-guide-item>span{flex:1;min-width:0}.etf-guide-item b,.etf-guide-item small{display:block;overflow-wrap:anywhere;white-space:normal}
+.etf-guide-item b{font-size:13px;line-height:1.45}.etf-guide-item small{margin-top:3px;color:#8b95a1;font-size:11px;line-height:1.4}
+.etf-guide-item em{flex:none;margin-left:auto;color:#3182f6;font-size:11px;font-style:normal;font-weight:700}
 @media(max-width:1400px){.etf-discovery{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.page{width:min(100% - 12px,1860px)}.etf-discovery{grid-template-columns:1fr}.etf-guide-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.page{width:min(100% - 12px,1860px)}.etf-discovery{grid-template-columns:1fr}}
 @media(max-width:1120px){.workspace-side{position:sticky;z-index:50;top:68px;display:flex;width:100%;height:auto;padding:7px 10px;gap:3px;border-right:0;border-bottom:1px solid #e5e8eb;overflow-x:auto}.workspace-side>p,.workspace-side-note{display:none}.workspace-side>a{flex:0 0 auto;margin:0;padding:8px 10px}.workspace-side>a span{width:auto}.workspace-navigation .page{width:min(1860px,calc(100% - 20px));margin:20px auto 70px}.workspace-navigation main:not(.page){margin-left:0}}
 @media(max-width:760px){.workspace-side{top:68px}.workspace-side>a{font-size:11px}}
 

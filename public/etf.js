@@ -41,7 +41,7 @@ async function loadEtfGuide() {
     const host = document.querySelector(`[data-etf-category="${category}"]`);
     host.innerHTML = '<span class="status-inline">불러오는 중…</span>';
     try {
-      const items = await fetch(`/api/etfs?category=${category}&limit=8`).then((response) => response.json());
+      const items = await fetch(`/api/etfs?category=${category}&limit=10`).then((response) => response.json());
       host.innerHTML = items.map((item) => `<button type="button" class="etf-guide-item" data-guide-etf="${item.corpCode}"><span><b>${item.name}</b><small>${item.stockCode} · ${money(item.marketCap)}</small></span><em>담기</em></button>`).join("") || '<span class="status-inline">표시할 ETF가 없습니다.</span>';
       host.querySelectorAll("[data-guide-etf]").forEach((button) => button.onclick = () => {
         const item = items.find((candidate) => candidate.corpCode === button.dataset.guideEtf);
