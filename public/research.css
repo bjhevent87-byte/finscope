@@ -1,0 +1,3 @@
+#links{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px}
+#links .research-list{grid-column:1/-1;margin-top:0}
+@media(max-width:640px){#links{grid-template-columns:1fr}}

@@ -70,7 +70,7 @@ export function nav(active) {
   const links = [
     ["home", "/", "⌂", "홈"], ["correlation", "/correlation.html", "⌁", "데이터 실험실"],
     ["compare", "/index.html", "▦", "기업 비교"], ["company", "/company.html", "◎", "기업 분석"],
-    ["filings", "/filings.html", "▤", "DART 공시"], ["research", "/research.html", "⌕", "리서치"],
+    ["filings", "/filings.html", "▤", "DART 공시"], ["research", "/research.html", "⌕", "리포트"],
     ["backtest", "/backtest.html", "↗", "백테스트"], ["etf", "/etf.html", "◇", "ETF 비교"],
   ];
   const topActive = active === "mission" ? "correlation" : active;
@@ -80,11 +80,11 @@ export function nav(active) {
     mission: [["#mission-overview", "◆", "처음 보기"], ["#mission-result", "▦", "업종별 결과"], ["#mission-chart", "↗", "업종 움직임"], ["#company-check", "◎", "대표기업 주가"], ["#mission-method", "?", "계산 방법"]],
     company: [["#company-overview", "◎", "분석 시작"], ["#company-analysis", "⌕", "기업·목적 선택"], ["#decision", "✓", "한 줄 결론"], ["#financial-health", "▦", "재무 상태"], ["#external-factors", "↔", "환율·금리 관계"], ["#market-behavior", "↗", "주가·거래량"], ["#financials", "≡", "연도별 재무"], ["#company-research", "▤", "관련 리포트"], ["#analysis-method", "?", "분석 기준"]],
     filings: [["#filings-overview", "◎", "공시 한눈에"], ["#filing-search", "⌕", "기업·기간 선택"], ["#list", "▤", "결과 보기"]],
-    research: [["#research-overview", "◎", "리서치 한눈에"], ["#research-search", "⌕", "기업 고르기"], ["#links", "↗", "보고서 보기"], ["#research-policy", "!", "확인할 점"]],
+    research: [["#research-overview", "◎", "리포트 한눈에"], ["#research-search", "⌕", "기업 고르기"], ["#links", "↗", "리포트 찾기"], ["#research-policy", "!", "확인할 점"]],
     backtest: [["#backtest-overview", "◎", "처음 보기"], ["#backtest-builder", "+", "자산 담기"], ["#weights", "%", "비중 정하기"], ["#summary", "▦", "결과 비교"], ["#backtest-policy", "!", "꼭 확인할 점"]],
     etf: [["#etf-overview", "◎", "ETF 둘러보기"], ["#etf-select", "⌕", "상품 담기"], ["#etf-output", "▦", "한눈에 비교"], ["#etf-policy", "!", "꼭 확인할 점"]],
   };
-  const sideTitles = { correlation: "데이터 실험실", company: "기업 분석", filings: "DART 공시", research: "리서치", backtest: "백테스트", etf: "ETF 비교", mission: "환율·금리 업종 비교" };
+  const sideTitles = { correlation: "데이터 실험실", company: "기업 분석", filings: "DART 공시", research: "리포트", backtest: "백테스트", etf: "ETF 비교", mission: "환율·금리 업종 비교" };
   const sideNotes = {
     correlation: ["질문부터 골라보세요", "예시 질문을 고르면 필요한 데이터와 분석 방법이 자동으로 설정돼요."],
     company: ["읽는 순서", "한 줄 결론 → 재무 상태 → 환율·금리 관계 → 공시 원문 순서로 확인해보세요."],

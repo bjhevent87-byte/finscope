@@ -1,4 +1,4 @@
-import { $, nav } from "./pages.js?v=19";
+import { $, nav } from "./pages.js?v=21";
 
 $("#nav").innerHTML = nav("mission");
 let lastReport = null;

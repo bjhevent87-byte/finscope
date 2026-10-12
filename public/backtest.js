@@ -1,4 +1,4 @@
-import{$,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=19";
+import{$,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=21";
 $("#nav").innerHTML=nav("backtest");let picks=JSON.parse(localStorage.getItem("backtestAssets")||"[]");
 const today=new Date(),yearAgo=new Date();yearAgo.setFullYear(today.getFullYear()-1);const iso=d=>d.toISOString().slice(0,10),compact=d=>d.replaceAll("-","");
 const period=document.createElement("div");period.className="period-controls";period.innerHTML=`<label class="field">시작일<input id="test-start" type="date" min="2020-01-01" value="${iso(yearAgo)}"></label><label class="field">종료일<input id="test-end" type="date" min="2020-01-01" value="${iso(today)}"></label><label class="field">빠른 기간<select id="test-period"><option value="1">1년</option><option value="3">3년</option><option value="5">5년</option><option value="max">최대(2020~)</option></select></label>`;document.querySelector(".toolbar").insertBefore(period,$("#run"));

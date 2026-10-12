@@ -1,4 +1,4 @@
-import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=19";
+import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=21";
 $("#nav").innerHTML=nav("company");
 let selected=null,analysis=null;
 const finite=Number.isFinite;
@@ -119,7 +119,8 @@ function renderFinancials(data){
 function renderResearch(data){
   const items=(data.research?.items||[]).slice(0,5),params=new URLSearchParams({corpCode:data.company.corpCode,name:data.company.name,stockCode:data.company.stockCode});
   $("#research-hub-link").href=`/research.html?${params}`;
-  $("#company-research-list").innerHTML=items.length?items.map(item=>`<a class="company-research-item" href="${esc(item.url)}" target="_blank" rel="noopener"><span><b>${esc(item.title||"제목 없음")}</b><small>${esc(item.broker||"작성기관 확인 필요")} · ${esc(item.date?dateText(String(item.date).replace(/\D/g,"")):"작성일 확인 필요")}</small></span><em>원문 보기 ↗</em></a>`).join(""):`<div class="research-empty"><b>연결된 최신 리서치가 없습니다.</b><span>${esc(data.research?.error||"종목 리서치가 제공되지 않으면 리서치 화면에서 기업명으로 다시 검색해 보세요.")}</span></div>`;
+  $("#hankyung-consensus-link").href=/^\d{6}$/.test(String(data.company.stockCode||""))?`https://markets.hankyung.com/stock/${data.company.stockCode}/consensus`:"https://markets.hankyung.com/consensus";
+  $("#company-research-list").innerHTML=items.length?items.map(item=>`<a class="company-research-item" href="${esc(item.url)}" target="_blank" rel="noopener"><span><b>${esc(item.title||"제목 없음")}</b><small>${esc(item.broker||"작성기관 확인 필요")} · ${esc(item.date?dateText(String(item.date).replace(/\D/g,"")):"작성일 확인 필요")}</small></span><em>원문 보기 ↗</em></a>`).join(""):`<div class="research-empty"><b>연결된 최신 리포트가 없습니다.</b><span>${esc(data.research?.error||"종목 리포트가 제공되지 않으면 리포트 화면에서 기업명으로 다시 검색해 보세요.")}</span></div>`;
 }
 function downloadCsv(data){
   const decision=decisionModel(data),rows=[["기업",data.company.name],["종목코드",data.company.stockCode],["업종",data.company.industry],["분석 목적",$("#analysis-purpose").selectedOptions[0].textContent],["한 줄 결론",decision.title],["설명",decision.copy],["생성 시각",data.generatedAt],[],["지표","최신값","3년 분류","업종 비교"],...data.metrics.map(item=>[item.label,item.display,item.state,item.peer]),[],["외부요인","상관계수","강도","공통 관측월"],...data.sensitivities.map(item=>[item.name,finite(item.coefficient)?item.coefficient.toFixed(3):"판단 유보",item.strength,item.pairs.length])],csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value??"").replaceAll('"','""')}"`).join(",")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),link=document.createElement("a");link.href=url;link.download=`${data.company.name}_기업분석.csv`;link.click();URL.revokeObjectURL(url);

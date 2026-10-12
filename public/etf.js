@@ -1,4 +1,4 @@
-import { $, setupSearch, nav, money, percent } from "./pages.js?v=20";
+import { $, setupSearch, nav, money, percent } from "./pages.js?v=21";
 
 $("#nav").innerHTML = nav("etf");
 const colors = ["#3182f6", "#f97316", "#6366f1", "#a855f7", "#14b8a6", "#ef4444"];

@@ -1,4 +1,4 @@
-import { $, nav, setupMarketGuide, setupSearch } from "./pages.js?v=19";
+import { $, nav, setupMarketGuide, setupSearch } from "./pages.js?v=21";
 
 $("#nav").innerHTML = nav("correlation");
 const correlationPage = document.querySelector(".correlation-page");
