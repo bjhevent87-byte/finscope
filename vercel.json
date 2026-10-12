@@ -8,8 +8,10 @@
       "maxDuration": 300
     }
   },
+  "redirects": [
+    { "source": "/", "destination": "/home.html", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/home.html" },
     { "source": "/api/:path*", "destination": "/api/index?__path=:path*" }
   ],
   "headers": [

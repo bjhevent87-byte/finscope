@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import http from "node:http";
 import { after, before, test } from "node:test";
 import handler from "../api/index.mjs";
@@ -14,6 +15,12 @@ before(async () => {
 
 after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
+});
+
+test("Vercel root redirects to the home page before index.html is served", () => {
+  const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.ok(config.redirects.some((rule) => rule.source === "/" && rule.destination === "/home.html"));
+  assert.ok(!config.rewrites.some((rule) => rule.source === "/"));
 });
 
 test("Vercel rewrite reaches the existing health endpoint", async () => {

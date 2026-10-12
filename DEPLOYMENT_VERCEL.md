@@ -9,7 +9,7 @@ FinScope 화면은 Vercel의 정적 파일로, DART·KRX·ECOS 등을 호출하�
 1. <https://vercel.com/new>에서 본인 GitHub 계정으로 로그인합니다.
 2. 개인 계정 `bjhevent87-byte`의 비공개 `finscope` 저장소를 선택합니다. GitHub App 설치 화면이 나오면 **이 저장소에만** 접근하도록 선택합니다. 다른 비공개 저장소 전체에 대한 접근은 허용할 필요가 없습니다.
 3. 프로젝트 이름은 `finscope` 또는 원하는 이름으로 설정하고, 플랜이 **Hobby**인지 확인합니다. 유료 업그레이드나 결제수단 입력은 필요하지 않습니다.
-4. 저장소 최상위가 프로젝트 루트입니다. Framework Preset은 **Other**, Root Directory는 `./`로 둡니다. `vercel.json`이 `/`를 `home.html`로, `/api/*`를 서버리스 함수로 연결합니다.
+4. 저장소 최상위가 프로젝트 루트입니다. Framework Preset은 **Other**, Root Directory는 `./`로 둡니다. `vercel.json`이 `/`를 `/home.html`로 이동시키고, `/api/*`를 서버리스 함수로 연결합니다. Vercel에서는 `index.html`이 `/`보다 우선 제공되므로 루트 경로에는 rewrite가 아닌 redirect를 사용합니다.
 5. 배포 버튼을 누르기 전에 아래 환경변수를 등록합니다. 키 값은 GitHub 파일·채팅·스크린샷에 넣지 않습니다.
 
 ## 2. 서버 환경변수
