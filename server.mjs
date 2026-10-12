@@ -1186,7 +1186,7 @@ const mime = {
   ".ico": "image/x-icon",
 };
 
-const server = http.createServer(async (req, res) => {
+export async function handleRequest(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname.startsWith("/api/")) {
@@ -1211,7 +1211,10 @@ const server = http.createServer(async (req, res) => {
       res.end(body);
     } catch { res.writeHead(500); res.end("Server error"); }
   }
-});
+}
 
-await loadCompanies();
-server.listen(PORT, HOST, () => console.log(`FinScope: http://localhost:${PORT}`));
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await loadCompanies();
+  const server = http.createServer(handleRequest);
+  server.listen(PORT, HOST, () => console.log(`FinScope: http://localhost:${PORT}`));
+}

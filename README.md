@@ -144,7 +144,7 @@ ETF 목록과 최신 정보는 승인된 KRX ETF 일별매매정보를 사용합
 
 Node.js 서버를 배포하고 API 키를 호스팅 서비스의 Secrets로 등록해야 합니다. 기업 검색 데이터는 `data/companies.json`에 포함되며 `npm run build:data`로 기존 DART 기업코드 캐시에서 갱신합니다.
 
-비공개 GitHub 저장소와 Koyeb을 이용하는 순서는 [`DEPLOYMENT_KOYEB.md`](DEPLOYMENT_KOYEB.md), Render 대안은 [`DEPLOYMENT.md`](DEPLOYMENT.md)를 참고하세요. Koyeb 신규 계정은 유료 요금제가 필요하므로 무료 배포를 원한다면 다른 호스팅을 선택해야 합니다. 공개 운영을 위해 API 키 서버 보관, 6시간 메모리 캐시, 사용자별 분당 60회 요청 제한, 보안 헤더, 데이터 기준일과 투자 비권유 고지문을 적용했습니다.
+현재 무료 포트폴리오 배포 경로는 비공개 GitHub 저장소와 Vercel Hobby입니다. [`DEPLOYMENT_VERCEL.md`](DEPLOYMENT_VERCEL.md)를 참고하세요. Koyeb 신규 계정은 유료 요금제가 필요하며, Render 무료 플랜은 첫 접속이 느릴 수 있어 대안으로만 남겨 두었습니다. 공개 운영을 위해 API 키 서버 보관, 인스턴스별 메모리 캐시·요청 제한, 보안 헤더, 데이터 기준일과 투자 비권유 고지문을 적용했습니다.
 
 포트폴리오 제출용 운영 방식은 **로컬 HTML 파일이나 PC 시작프로그램이 아니라 공개 서버 URL**을 권장합니다. ECOS·FRED·KRX·DART 인증키를 브라우저 파일에 넣으면 노출되므로, 현재처럼 Node 서버에서 키를 보관한 뒤 공개 URL을 공유해야 합니다. 이 주소에서 FinScope PWA를 설치하면 재부팅 후에도 CMD 실행 없이 일반 앱처럼 열 수 있습니다.
 
