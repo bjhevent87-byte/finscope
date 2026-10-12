@@ -52,3 +52,38 @@ main{padding-top:34px}
 @media(max-width:1450px){.global-header nav{gap:18px}.global-header nav a{font-size:14px}.intro{grid-template-columns:1fr}.freshness-card{max-width:720px}}
 @media(max-width:1120px){body{padding-top:72px}.app-shell{display:block}.side-nav{top:72px;height:auto;padding:8px 16px}.side-nav>a{font-size:14px}.intro{grid-template-columns:1fr}}
 @media(max-width:760px){body{padding-top:68px}.global-header{min-height:68px}.side-nav{top:68px}.intro{padding:30px 24px}.intro h1{font-size:38px}.intro-copy{font-size:15px}.section{padding:22px}.section-heading h2{font-size:24px}}
+
+/* Keep the dashboard readable at the browser's normal (100%) zoom. */
+.intro{
+  grid-template-columns:minmax(0,1fr) minmax(360px,400px);
+  align-items:center;
+  gap:32px;
+}
+.intro>div:first-child{min-width:0}
+.intro h1{
+  max-width:none;
+  font-size:clamp(42px,2.85vw,56px);
+  line-height:1.16;
+  letter-spacing:-.055em;
+  word-break:keep-all;
+  overflow-wrap:normal;
+}
+.intro-copy{max-width:900px}
+.industry-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.industry-card{min-width:0;padding:22px}
+.industry-title h3{font-size:20px}
+.driver-list{gap:12px}
+.driver{grid-template-columns:minmax(0,1fr) auto}
+.driver>span:first-child{min-width:0}
+.driver b,.driver small,.industry-path{word-break:keep-all;overflow-wrap:normal}
+.driver b{font-size:15px;line-height:1.5}
+.driver small{font-size:12px}
+.state{font-size:12px;white-space:nowrap}
+.industry-path{font-size:13px}
+@media(max-width:1750px){
+  .intro{grid-template-columns:minmax(0,1fr)}
+  .freshness-card{width:min(100%,720px);max-width:none}
+}
+@media(max-width:1120px){.industry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.intro h1{font-size:clamp(34px,6vw,42px)}}
+@media(max-width:600px){.industry-grid{grid-template-columns:1fr}}
