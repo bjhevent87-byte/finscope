@@ -87,3 +87,5 @@ main{padding-top:34px}
 @media(max-width:1120px){.industry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.intro h1{font-size:clamp(34px,6vw,42px)}}
 @media(max-width:600px){.industry-grid{grid-template-columns:1fr}}
+.leaders-basis span{display:block}
+.leaders-basis .leaders-update-note{margin-top:6px;color:#5e7188;font-size:12px;line-height:1.55}
