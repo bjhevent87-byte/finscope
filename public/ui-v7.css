@@ -37,3 +37,21 @@
 .workspace-navigation .results-heading #result-scope{margin:9px 0 0;color:#1769d2;font-size:14px;font-weight:800;line-height:1.5}
 .workspace-navigation .chart-limit-note{background:#eaf3ff;color:#254f83;font-size:14px;line-height:1.5}
 @media(max-width:720px){.workspace-navigation .filter-toggle{align-items:flex-start;flex-wrap:wrap;padding:16px;gap:12px}.workspace-navigation .filter-count{margin-left:35px}.workspace-navigation .results-heading{align-items:flex-start;gap:10px;flex-wrap:wrap}}
+
+/* Purpose-first screening catalog: one readable group instead of all 30 metrics at once. */
+.criterion-catalog>#criterion-catalog{display:block;margin-top:12px}
+.criterion-group-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:2px 1px 9px}
+.criterion-group-tab{display:flex;flex:0 0 auto;align-items:center;gap:9px;min-height:42px;padding:9px 13px;border:1px solid #d8e3f1;border-radius:11px;background:#fff;color:#38506e;font:700 13px/1.35 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap}
+.criterion-group-tab.active,.criterion-group-tab:hover{border-color:#2878f0;background:#edf5ff;color:#1769d2}
+.criterion-group-tab small{color:#7186a4;font-size:11px;font-weight:650}
+.criterion-group-info{margin:6px 0 12px;padding:12px 15px;border-radius:12px;background:#f1f7ff;color:#29486f}
+.criterion-group-info strong{font-size:15px}
+.criterion-group-info p{margin:3px 0 0;font-size:13px;line-height:1.55}
+.criterion-group-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.criterion-group-grid .criterion-preset{min-height:108px;padding:14px;border-radius:12px}
+.criterion-group-grid .criterion-preset b{font-size:14px}
+.criterion-group-grid .criterion-preset span{font-size:12px}
+.criterion-group-grid .criterion-preset small{font-size:12px;line-height:1.5}
+.criterion-group-grid .criterion-preset.is-selected{border-color:#85b9fa;background:#f1f7ff}
+@media(max-width:1200px){.criterion-group-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.criterion-group-grid{grid-template-columns:1fr}.criterion-group-tab{min-height:40px}}

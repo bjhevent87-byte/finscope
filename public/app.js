@@ -1,3 +1,5 @@
+import { CRITERION_GROUPS } from "./criterion-groups.js";
+
 const state = {
   selected: JSON.parse(localStorage.getItem("compareCompanies") || "[]"),
   data: null,
@@ -13,6 +15,7 @@ const state = {
   screeningDetails: new Map(),
   movingAverages: JSON.parse(localStorage.getItem("movingAverages") || "[5,20,60,120]"),
   criteria: JSON.parse(localStorage.getItem("investmentCriteria") || '[{"metric":"operatingMargin","operator":">=","value":10},{"metric":"roe","operator":">=","value":10},{"metric":"debtRatio","operator":"<=","value":100},{"metric":"fcf","operator":">","value":0}]'),
+  criterionGroup: localStorage.getItem("criterionGroup") || "growth",
 };
 
 const metrics = {
@@ -245,6 +248,39 @@ function hideCanvasTooltip(tooltipId) {
   if (tooltip) tooltip.hidden = true;
 }
 
+function renderCriterionCatalog() {
+  const selectedGroup = CRITERION_GROUPS.find((group) => group.id === state.criterionGroup) || CRITERION_GROUPS[0];
+  const selectedMetrics = new Set(criterionMetricKeys());
+  $("#criterion-catalog").innerHTML = `
+    <div class="criterion-group-tabs" aria-label="조건 지표 분류">
+      ${CRITERION_GROUPS.map((group) => `<button type="button" class="criterion-group-tab ${group.id === selectedGroup.id ? "active" : ""}" data-criterion-group="${group.id}" aria-pressed="${group.id === selectedGroup.id}"><strong>${group.title}</strong><small>${group.metrics.filter((key) => selectedMetrics.has(key)).length}/${group.metrics.length} 선택</small></button>`).join("")}
+    </div>
+    <div class="criterion-group-info"><strong>${selectedGroup.title}</strong><p>${selectedGroup.note}</p></div>
+    <div class="criterion-group-grid">${selectedGroup.metrics.map((key) => {
+      const metric = metrics[key];
+      const guide = metricGuides[key] || { operator: ">=", value: 0, text: metricDescriptions[key] };
+      const selected = selectedMetrics.has(key);
+      return `<button type="button" class="criterion-preset ${selected ? "is-selected" : ""}" data-criterion-metric="${key}"><b>${selected ? "✓" : "+"} ${metric.label}</b><span>${metricGuides[key] ? `${guide.operator} ${guide.value}${metric.unit}` : "기준 직접 설정"}</span><small>${guide.text}</small></button>`;
+    }).join("")}</div>`;
+  document.querySelectorAll("[data-criterion-group]").forEach((button) => button.addEventListener("click", () => {
+    state.criterionGroup = button.dataset.criterionGroup;
+    localStorage.setItem("criterionGroup", state.criterionGroup);
+    renderCriterionCatalog();
+  }));
+  document.querySelectorAll("[data-criterion-metric]").forEach((button) => button.addEventListener("click", () => {
+    const metric = button.dataset.criterionMetric;
+    const existingIndex = state.criteria.findIndex((criterion) => criterion.metric === metric);
+    if (existingIndex >= 0) {
+      document.querySelector(`.criterion-row[data-index="${existingIndex}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    const guide = metricGuides[metric] || { operator: ">=", value: 0 };
+    state.criteria.push({ metric, operator: guide.operator, value: guide.value });
+    state.metric = metric;
+    savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults();
+  }));
+}
+
 function renderCriteria() {
   const options = Object.entries(metrics).map(([key, metric]) => `<option value="${key}">${metric.label} (${metric.unit})</option>`).join("");
   $("#criteria-list").innerHTML = state.criteria.map((criterion, index) => `
@@ -265,14 +301,7 @@ function renderCriteria() {
     row.querySelector(".criterion-value").addEventListener("input", (event) => { state.criteria[index].value = Number(event.target.value); savePreferences(); invalidateScreening(); if (state.data) renderResults(); });
     row.querySelector(".criterion-remove").addEventListener("click", () => { state.criteria.splice(index, 1); savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults(); });
   });
-  $("#criterion-catalog").innerHTML = Object.entries(metrics).map(([key, metric]) => { const guide = metricGuides[key] || { operator: ">=", value: 0, text: metricDescriptions[key] }; return `<button type="button" class="criterion-preset" data-criterion-metric="${key}"><b>+ ${metric.label}</b><span>${guide.operator} ${guide.value}${metric.unit}</span><small>${guide.text}</small></button>`; }).join("");
-  document.querySelectorAll("[data-criterion-metric]").forEach((button) => button.addEventListener("click", () => {
-    const metric = button.dataset.criterionMetric;
-    const guide = metricGuides[metric] || { operator: ">=", value: 0 };
-    if (!state.criteria.some((criterion) => criterion.metric === metric)) state.criteria.push({ metric, operator: guide.operator, value: guide.value });
-    state.metric = metric;
-    savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults();
-  }));
+  renderCriterionCatalog();
 }
 
 $("#add-criterion").addEventListener("click", () => { state.criteria.push({ metric: "operatingMargin", operator: ">=", value: 10 }); state.metric = "operatingMargin"; savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults(); });

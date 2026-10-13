@@ -23,17 +23,24 @@
 .ai-guide-question-groups{display:grid;gap:13px;padding:0 14px 15px;border-top:1px solid #e8eef7}
 .ai-guide-question-groups h3{margin:11px 0 7px;color:#334a6a;font-size:13px}
 .ai-guide-question-buttons{display:flex;flex-wrap:wrap;gap:7px}
-.ai-guide-question-buttons button{border:1px solid #d4e0f0;border-radius:9px;background:#f6f9fd;color:#233a5e;padding:8px 10px;font:700 12px/1.4 'Noto Sans KR',sans-serif;cursor:pointer}
+.ai-guide-question-buttons button{border:1px solid #d4e0f0;border-radius:9px;background:#f6f9fd;color:#233a5e;padding:9px 11px;font:700 13px/1.45 'Noto Sans KR',sans-serif;cursor:pointer}
 .ai-guide-question-buttons button:hover{border-color:#2878f0;color:#145bc4}
 .ai-guide-answer{margin-top:18px;border:1px solid #d6e4f7;border-radius:17px;background:#f6faff;padding:18px}
 .ai-guide-answer-badge{display:inline-block;margin-bottom:7px;color:#246be1;font-size:12px;font-weight:800}
 .ai-guide-answer h3{margin:0 0 7px;font-size:19px;line-height:1.4}
 .ai-guide-answer p{margin:0;color:#3e5270}
+.ai-guide-analysis-step{margin-top:14px;padding:13px 14px;border:1px solid #d8e7fa;border-radius:12px;background:#fff}
+.ai-guide-analysis-step strong{display:block;margin-bottom:4px;color:#165bc2;font-size:14px}
+.ai-guide-analysis-step p{font-size:14px;line-height:1.65}
 .ai-guide-answer .ai-guide-evidence{margin-top:10px;color:#286dec;font-size:12px;font-weight:700}
 .ai-guide-answer .ai-guide-note{margin-top:8px;font-size:13px;color:#637896}
 .ai-guide-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
 .ai-guide-links:empty{display:none}
 .ai-guide-links a{border:1px solid #bcd2f2;border-radius:10px;background:#fff;color:#175dc7;padding:8px 11px;text-decoration:none;font-size:13px;font-weight:750}
+.ai-guide-followups{display:grid;gap:7px;margin-top:17px;padding-top:14px;border-top:1px solid #d7e5f8}
+.ai-guide-followups>strong{font-size:14px;color:#213c60}
+.ai-guide-followups button{border:1px solid #cbdcf2;border-radius:10px;background:#fff;color:#1d5fb7;padding:9px 11px;text-align:left;font:700 13px/1.45 'Noto Sans KR',sans-serif;cursor:pointer}
+.ai-guide-followups button:hover{border-color:#2878f0;background:#eef6ff}
 .ai-guide-menu-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:12px 0 11px}
 .ai-guide-menu-head strong{font-size:16px}
 .ai-guide-menu-head span{color:#71809a;font-size:12px}
@@ -50,7 +57,7 @@
 .ai-guide-form-row{display:flex;gap:8px}
 .ai-guide-form-row input{min-width:0;flex:1;border:1px solid #cbd9eb;border-radius:11px;padding:12px 13px;color:#1b2638;font:inherit}
 .ai-guide-form-row button,.ai-guide-ai-button{border:0;border-radius:11px;background:#2878f0;color:#fff;padding:11px 15px;font-family:inherit;font-size:14px;font-weight:800;line-height:1.3;cursor:pointer}
-.ai-guide-ai-button{margin-top:9px;background:#173b74}
+.ai-guide-ai-button{margin-top:9px;background:#173b74;width:100%;font-size:15px}
 .ai-guide-ai-button:disabled{opacity:.6;cursor:wait}
 .ai-guide-foot{margin:11px 0 0;color:#6b7d95;font-size:12px;line-height:1.5}
 @media(max-width:600px){.ai-guide-trigger{right:14px;bottom:14px;padding:13px 17px}.ai-guide-panel{left:0;right:0;bottom:0;width:100%;max-height:91dvh;border-radius:22px 22px 0 0}.ai-guide-head{padding:19px 18px 16px}.ai-guide-head h2{font-size:23px}.ai-guide-body{padding:17px 18px}.ai-guide-question-list summary span{display:none}.ai-guide-menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ai-guide-menu a{flex-direction:row;align-items:center;gap:8px;padding:10px}.ai-guide-menu-number{flex-basis:26px;width:26px;height:26px}.ai-guide-menu strong{font-size:13px}.ai-guide-menu small{font-size:10px}.ai-guide-form{padding:14px 18px max(18px,env(safe-area-inset-bottom))}}
