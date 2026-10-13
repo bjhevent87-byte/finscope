@@ -13,6 +13,10 @@ const classificationCache = new Map();
 const answerCache = new Map();
 let dailyTotal = { day: "", count: 0 };
 
+function apiKey(env) {
+  return env.OPENAI_API_KEY || env.OPEN_API_KEY;
+}
+
 async function readBody(req) {
   if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) return req.body;
   if (typeof req.body === "string" || Buffer.isBuffer(req.body)) return JSON.parse(String(req.body));
@@ -129,7 +133,7 @@ export async function explainWithOpenAI(question, page, apiKey, model = "gpt-6-l
 }
 
 export function aiGuideStatus(env) {
-  return { available: env.FINSCOPE_AI_ENABLED === "true" && Boolean(env.OPENAI_API_KEY), mode: "grounded-pilot", dailyLimit: Math.min(10, Math.max(1, Number.parseInt(env.FINSCOPE_AI_DAILY_LIMIT, 10) || 1)), model: env.FINSCOPE_AI_MODEL || "gpt-6-luna" };
+  return { available: env.FINSCOPE_AI_ENABLED === "true" && Boolean(apiKey(env)), mode: "grounded-pilot", dailyLimit: Math.min(10, Math.max(1, Number.parseInt(env.FINSCOPE_AI_DAILY_LIMIT, 10) || 1)), model: env.FINSCOPE_AI_MODEL || "gpt-6-luna" };
 }
 
 export async function handleAiGuide(req, res, url, env, json, clientIp) {
@@ -158,7 +162,7 @@ export async function handleAiGuide(req, res, url, env, json, clientIp) {
     const access = spendAccess(clientIp(req), env);
     if (!access.allowed) return json(res, 429, { ...fixed, retryAfterSeconds: access.retryAfterSeconds || 0, note: access.reason === "cooldown" ? `다음 AI 질문은 ${access.retryAfterSeconds}초 뒤에 할 수 있습니다. 빠른 안내는 계속 이용할 수 있습니다.` : "오늘의 AI 시험 호출 한도에 도달했습니다. 질문 목록과 메뉴 안내는 계속 사용할 수 있습니다." });
     try {
-      const result = await explainWithOpenAI(question, page, env.OPENAI_API_KEY, env.FINSCOPE_AI_MODEL || "gpt-6-luna");
+      const result = await explainWithOpenAI(question, page, apiKey(env), env.FINSCOPE_AI_MODEL || "gpt-6-luna");
       let answer;
       if (result.status === "answered") {
         answer = {
@@ -191,7 +195,7 @@ export async function handleAiGuide(req, res, url, env, json, clientIp) {
   const access = spendAccess(clientIp(req), env);
   if (!access.allowed) return json(res, 429, { ...fixed, retryAfterSeconds: access.retryAfterSeconds || 0, error: access.reason === "cooldown" ? `다음 AI 질문은 ${access.retryAfterSeconds}초 뒤에 할 수 있습니다.` : "오늘의 AI 사용 한도에 도달했습니다. 안내 링크를 이용해 주세요." });
   try {
-    const result = await classifyWithOpenAI(question, page, env.OPENAI_API_KEY, env.FINSCOPE_AI_MODEL || "gpt-6-luna");
+    const result = await classifyWithOpenAI(question, page, apiKey(env), env.FINSCOPE_AI_MODEL || "gpt-6-luna");
     if (result.confidence !== "high") return json(res, 200, { ...fixed, source: "fixed", note: "질문 의도가 분명하지 않아 임의로 연결하지 않았습니다." });
     classificationCache.set(key, { route: result.route, expiresAt: Date.now() + 24 * 60 * 60_000 });
     return json(res, 200, { ...routeAnswer(result.route, "ai"), note: "AI는 질문의 목적만 분류했습니다. 수치나 투자 판단을 생성하지 않았습니다." });

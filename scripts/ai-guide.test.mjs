@@ -55,6 +55,7 @@ test("AI is disabled unless both switch and server-side key are present", () => 
   assert.equal(aiGuideStatus({ OPENAI_API_KEY: "test" }).available, false);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true" }).available, false);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true", OPENAI_API_KEY: "test" }).available, true);
+  assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true", OPEN_API_KEY: "test" }).available, true);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true", OPENAI_API_KEY: "test" }).dailyLimit, 1);
 });
 
