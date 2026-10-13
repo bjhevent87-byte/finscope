@@ -27,6 +27,12 @@ Vercel 프로젝트의 **Settings → Environment Variables**에서 다음 이�
 
 선택값 `CACHE_TTL_MINUTES=360`, `RATE_LIMIT_PER_MINUTE=60`을 추가할 수 있습니다. 단, Vercel 함수의 메모리 캐시와 요청 제한은 인스턴스마다 별개이고 재시작 시 초기화됩니다. 공개 트래픽·호출량을 안정적으로 통제하려면 영속 캐시와 공용 요청 제한 저장소가 필요합니다.
 
+### 선택 기능: AI 길잡이
+
+AI 길잡이의 용어·화면 안내는 무료이며 OpenAI API 키가 없어도 작동합니다. 자유 질문의 목적을 AI로 분류하려면 **별도 OpenAI API 과금 계정**이 필요합니다. ChatGPT 구독이나 Vercel Hobby 무료 플랜에 API 사용료가 포함되는 것은 아닙니다. 먼저 OpenAI 프로젝트에서 지출 한도를 설정하고, 필요한 경우에만 `OPENAI_API_KEY`와 `FINSCOPE_AI_ENABLED=true`를 Vercel 환경변수에 등록한 뒤 재배포하세요. `FINSCOPE_AI_MODEL`은 기본 `gpt-6-luna`입니다. 키와 질문 원문은 GitHub나 로그에 저장하지 않습니다. `/api/ai-guide/status`는 활성화 여부만 공개하며 키 값은 반환하지 않습니다.
+
+이 기능은 질문에서 방문할 화면을 고를 뿐, 회사 재무수치나 투자 의견을 생성하지 않습니다. 인스턴스 메모리의 호출 제한은 Vercel 전체의 확정 비용 한도가 아니므로 실제 공개 운영 전에는 OpenAI 측 하드 지출 한도와 모니터링이 필요합니다.
+
 ## 3. 배포 후 확인
 
 1. Vercel의 Production URL에서 `/api/health`를 열어 `ok: true`, `companyData: true` 및 필요한 공급자 `Configured: true`를 확인합니다. 이 화면은 **키 설정 여부**만 나타내며 실제 외부 API의 작동까지 보증하지 않습니다.

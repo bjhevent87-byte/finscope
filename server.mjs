@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMacroService, correlationInterpretation, macroSeriesCsv } from "./macro-data.mjs";
+import { handleAiGuide } from "./ai-guide-api.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -961,6 +962,9 @@ async function buildBenchmarks(selected, year, reportCode, beginDate = "", endDa
 }
 
 async function api(req, res, url) {
+  if (url.pathname === "/api/ai-guide" || url.pathname === "/api/ai-guide/status") {
+    return handleAiGuide(req, res, url, env, json, clientIp);
+  }
   if (url.pathname === "/api/health") {
     return json(res, 200, {
       ok: true,
