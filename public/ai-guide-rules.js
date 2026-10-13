@@ -51,5 +51,5 @@ export function guideAnswer(question, context = {}) {
     if (match[1] === "company" && context.companyName) answer.text = `${context.companyName}의 공시 재무와 기준일을 기업 분석 화면에서 확인해 보세요. 화면의 값을 확인하기 전에는 수치를 단정하지 않습니다.`;
     return answer;
   }
-  return { kind: "unknown", title: "질문을 더 구체적으로 알려 주세요", text: "어떤 기업, 지표, 기간을 보고 싶은지 적어 주시면 알맞은 화면을 찾기 쉬워요. 원한다면 AI가 질문의 목적만 분류할 수 있습니다.", links: [{ label: "기업 비교 보기", href: GUIDE_ROUTES.compare.href }, { label: "데이터 실험실 보기", href: GUIDE_ROUTES.correlation.href }] };
+  return { kind: "unknown", title: "질문을 더 구체적으로 알려 주세요", text: "어떤 기업, 지표, 기간을 보고 싶은지 적어 주시면 알맞은 화면을 찾기 쉬워요.", links: [{ label: "기업 비교 보기", href: GUIDE_ROUTES.compare.href }, { label: "데이터 실험실 보기", href: GUIDE_ROUTES.correlation.href }] };
 }
