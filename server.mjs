@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMacroService, correlationInterpretation, macroSeriesCsv } from "./macro-data.mjs";
 import { handleAiGuide } from "./ai-guide-api.mjs";
+import { stockDisplayName } from "./public/stock-identity.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -435,7 +436,7 @@ const INDUSTRY_NAMES = {
 
 const RATE_FX_MISSION_INDUSTRIES = [
   { id: "semiconductor", name: "반도체", indexName: "KRX 반도체", companies: [{ name: "삼성전자", stockCode: "005930" }, { name: "SK하이닉스", stockCode: "000660" }, { name: "DB하이텍", stockCode: "000990" }] },
-  { id: "auto", name: "자동차", indexName: "KRX 자동차", companies: [{ name: "현대자동차", stockCode: "005380" }, { name: "기아", stockCode: "000270" }, { name: "현대모비스", stockCode: "012330" }] },
+  { id: "auto", name: "자동차", indexName: "KRX 자동차", companies: [{ name: "현대차", stockCode: "005380" }, { name: "기아", stockCode: "000270" }, { name: "현대모비스", stockCode: "012330" }] },
   { id: "bank", name: "은행", indexName: "KRX 은행", companies: [{ name: "KB금융", stockCode: "105560" }, { name: "신한지주", stockCode: "055550" }, { name: "하나금융지주", stockCode: "086790" }] },
   { id: "energy", name: "에너지·화학", indexName: "KRX 에너지화학", companies: [{ name: "LG화학", stockCode: "051910" }, { name: "S-Oil", stockCode: "010950" }, { name: "금호석유", stockCode: "011780" }] },
   { id: "steel", name: "철강", indexName: "KRX 철강", companies: [{ name: "POSCO홀딩스", stockCode: "005490" }, { name: "현대제철", stockCode: "004020" }, { name: "세아베스틸지주", stockCode: "001430" }] },
@@ -672,9 +673,11 @@ async function searchCompanies(query, limit = 12) {
   try { activeCodes = await activeListingCodes(); } catch {}
   const exactCode = q.replace(/\D/g, "").slice(-6);
   return list
-    .filter((item) => item.name.toLowerCase().includes(q) || item.stockCode.includes(q))
+    .filter((item) => item.name.toLowerCase().includes(q) || stockDisplayName(item).toLowerCase().includes(q) || item.stockCode.includes(q))
     .map((item) => ({
       ...item,
+      name: stockDisplayName(item),
+      ...(stockDisplayName(item) !== item.name ? { legalName: item.name } : {}),
       listingStatus: activeCodes ? (activeCodes.has(item.stockCode) ? "active" : "inactive_or_unverified") : "unverified",
     }))
     .sort((a, b) => {
@@ -848,6 +851,8 @@ async function buildCompany(company, years, reportCode = "11011") {
   const dividend = dividendResult.status === "fulfilled" ? dividendResult.value : null;
   return {
     ...company,
+    name: stockDisplayName(company),
+    ...(stockDisplayName(company) !== company.name ? { legalName: company.name } : {}),
     industryCode,
     industry: industryLabel(industryCode, company.name),
     isFinancial,

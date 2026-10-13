@@ -14,6 +14,25 @@ test("common questions and terms are answered without model-generated numbers", 
   assert.ok(Object.values(GUIDE_ROUTES).every((route) => route.href.startsWith("/")));
 });
 
+test("free guide covers every top-level FinScope menu", () => {
+  const examples = {
+    home: "산업별 지표 보여줘",
+    correlation: "산업 스트레스 실험은 어디야?",
+    compare: "조건에 맞는 기업 찾기",
+    company: "기업 재무제표 분석",
+    filings: "DART 사업보고서 확인",
+    research: "한경 컨센서스 리포트 검색",
+    backtest: "포트폴리오 백테스트",
+    etf: "ETF 괴리율 비교",
+  };
+  assert.deepEqual(Object.keys(GUIDE_ROUTES).sort(), Object.keys(examples).sort());
+  for (const [route, question] of Object.entries(examples)) {
+    assert.equal(guideAnswer(question).links[0]?.href, GUIDE_ROUTES[route].href, question);
+    assert.ok(GUIDE_ROUTES[route].menuLabel);
+    assert.ok(GUIDE_ROUTES[route].menuHint);
+  }
+});
+
 test("AI is disabled unless both switch and server-side key are present", () => {
   assert.equal(aiGuideStatus({ OPENAI_API_KEY: "test" }).available, false);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true" }).available, false);

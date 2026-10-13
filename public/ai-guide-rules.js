@@ -1,13 +1,13 @@
 // FinScope AI Guide v1: financial facts are never generated here or by the model.
 export const GUIDE_ROUTES = Object.freeze({
-  home: { label: "경제·업종 지표 보기", href: "/home.html#macro", detail: "발표 기준일과 출처를 확인하며 경제·업종 지표를 살펴보세요." },
-  compare: { label: "기업 비교하기", href: "/index.html", detail: "시장·업종을 고르고 재무 지표를 같은 기준으로 비교해 보세요." },
-  company: { label: "기업 분석하기", href: "/company.html", detail: "선택한 기업의 공시 재무, 주가, 외부요인을 차례로 확인해 보세요." },
-  correlation: { label: "두 지표의 관계 보기", href: "/correlation.html", detail: "환율·금리·주가의 동반 움직임을 살펴보세요. 상관관계는 인과관계가 아닙니다." },
-  backtest: { label: "지난 성과 비교하기", href: "/backtest.html", detail: "과거 수익률과 기간별 변동을 확인해 보세요. 미래 성과를 보장하지 않습니다." },
-  etf: { label: "ETF 비교하기", href: "/etf.html", detail: "ETF의 종가, NAV, 괴리율을 같은 날짜 기준으로 비교해 보세요." },
-  filings: { label: "DART 공시 확인하기", href: "/filings.html", detail: "공시 원문과 공시일을 직접 확인해 보세요." },
-  research: { label: "증권사 리포트 보기", href: "/research.html", detail: "외부 리포트의 발행일과 작성 기관을 확인해 보세요." },
+  home: { label: "경제·업종 지표 보기", menuLabel: "홈", menuHint: "경제지표·산업별 지표", href: "/home.html", detail: "발표 기준일과 출처를 확인하며 경제·업종 지표를 살펴보세요." },
+  correlation: { label: "데이터 실험실 보기", menuLabel: "데이터 실험실", menuHint: "상관관계·산업 스트레스", href: "/correlation.html", detail: "환율·금리·주가의 동반 움직임과 업종 반응을 살펴보세요. 상관관계는 인과관계가 아닙니다." },
+  compare: { label: "기업 비교하기", menuLabel: "기업 비교", menuHint: "조건으로 후보 찾기", href: "/index.html", detail: "시장·업종을 고르고 재무 지표를 같은 기준으로 비교해 보세요." },
+  company: { label: "기업 분석하기", menuLabel: "기업 분석", menuHint: "한 기업의 재무·주가", href: "/company.html", detail: "선택한 기업의 공시 재무, 주가, 외부요인을 차례로 확인해 보세요." },
+  filings: { label: "DART 공시 확인하기", menuLabel: "DART 공시", menuHint: "사업보고서·공시 원문", href: "/filings.html", detail: "공시 원문과 공시일을 직접 확인해 보세요." },
+  research: { label: "증권사 리포트 보기", menuLabel: "리포트", menuHint: "네이버·한경 리포트", href: "/research.html", detail: "외부 리포트의 발행일과 작성 기관을 확인해 보세요." },
+  backtest: { label: "지난 성과 비교하기", menuLabel: "백테스트", menuHint: "과거 수익률·자산 비중", href: "/backtest.html", detail: "과거 수익률과 기간별 변동을 확인해 보세요. 미래 성과를 보장하지 않습니다." },
+  etf: { label: "ETF 비교하기", menuLabel: "ETF 비교", menuHint: "수익률·NAV·괴리율", href: "/etf.html", detail: "ETF의 종가, NAV, 괴리율을 같은 날짜 기준으로 비교해 보세요." },
 });
 
 const TERMS = [
@@ -43,7 +43,14 @@ export function guideAnswer(question, context = {}) {
   const term = TERMS.find((item) => item.pattern.test(text));
   if (term) return { kind: "faq", source: "fixed", title: `${term.term}란?`, text: term.description, links: [{ label: GUIDE_ROUTES[term.route].label, href: GUIDE_ROUTES[term.route].href }] };
   const rules = [
-    [/ETF|상장지수펀드/i, "etf"], [/백테스트|과거\s*수익|수익률\s*비교/i, "backtest"], [/공시|사업보고서|분기보고서/i, "filings"], [/리포트|증권사\s*보고서/i, "research"], [/상관|환율.*금리|금리.*환율/i, "correlation"], [/기업\s*비교|종목\s*비교|스크리닝|후보/i, "compare"], [/기업\s*분석|재무제표|실적|현금흐름/i, "company"], [/업종|산업|경제지표|금리|환율/i, "home"],
+    [/데이터\s*실험실|상관|산점도|시차|이동\s*상관|산업\s*스트레스|시장\s*변화와\s*업종|두\s*(?:지표|데이터)|환율.*(?:주가|금리)|(?:주가|금리).*환율/i, "correlation"],
+    [/ETF|상장지수펀드|\bNAV\b|추적\s*오차/i, "etf"],
+    [/백테스트|모의\s*투자|포트폴리오|과거\s*수익|수익률\s*비교|자산\s*비중/i, "backtest"],
+    [/\bDART\b|공시|사업보고서|분기보고서|반기보고서/i, "filings"],
+    [/리포트|컨센서스|애널리스트|한경|증권사\s*보고서/i, "research"],
+    [/기업\s*비교|종목\s*비교|스크리닝|후보|조건\s*통과|기업\s*찾기/i, "compare"],
+    [/기업\s*분석|재무제표|실적|현금흐름|영업이익|재무\s*상태/i, "company"],
+    [/홈|업종|산업|경제지표|기준금리|환율|유가|물가|시가총액|데이터\s*상태/i, "home"],
   ];
   const match = rules.find(([pattern]) => pattern.test(text));
   if (match) {
@@ -51,5 +58,5 @@ export function guideAnswer(question, context = {}) {
     if (match[1] === "company" && context.companyName) answer.text = `${context.companyName}의 공시 재무와 기준일을 기업 분석 화면에서 확인해 보세요. 화면의 값을 확인하기 전에는 수치를 단정하지 않습니다.`;
     return answer;
   }
-  return { kind: "unknown", title: "질문을 더 구체적으로 알려 주세요", text: "어떤 기업, 지표, 기간을 보고 싶은지 적어 주시면 알맞은 화면을 찾기 쉬워요.", links: [{ label: "기업 비교 보기", href: GUIDE_ROUTES.compare.href }, { label: "데이터 실험실 보기", href: GUIDE_ROUTES.correlation.href }] };
+  return { kind: "unknown", title: "어느 메뉴로 갈지 함께 골라볼까요?", text: "질문을 조금 더 구체적으로 적거나 아래 전체 메뉴에서 원하는 화면을 바로 선택해 보세요.", links: [{ label: "홈 둘러보기", href: GUIDE_ROUTES.home.href }, { label: "데이터 실험실", href: GUIDE_ROUTES.correlation.href }] };
 }

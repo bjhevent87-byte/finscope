@@ -1,4 +1,5 @@
 import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=21";
+import{hankyungReportSearchUrl,stockDisplayName}from"./stock-identity.js";
 $("#nav").innerHTML=nav("company");
 let selected=null,analysis=null;
 const finite=Number.isFinite;
@@ -34,6 +35,7 @@ async function runAnalysis(){
       fetchJson(`/api/naver-research?stockCode=${selected.stockCode}`).catch(error=>({items:[],error:error.message})),
     ]);
     const company=compare.companies?.[0];if(!company)throw new Error("기업 재무정보를 찾지 못했습니다.");
+    company.name=stockDisplayName(company);
     const history=market.companies?.[0]?.history||company.market?.history||[];
     analysis={...buildAnalysis({...company,longHistory:history},benchmark.benchmarks?.[0]||null,{fx,rate},market),research};renderAnalysis(analysis);
   }catch(error){$("#status").hidden=false;$("#status").textContent=`분석을 완료하지 못했습니다: ${error.message}`}
@@ -119,7 +121,7 @@ function renderFinancials(data){
 function renderResearch(data){
   const items=(data.research?.items||[]).slice(0,5),params=new URLSearchParams({corpCode:data.company.corpCode,name:data.company.name,stockCode:data.company.stockCode});
   $("#research-hub-link").href=`/research.html?${params}`;
-  $("#hankyung-consensus-link").href=/^\d{6}$/.test(String(data.company.stockCode||""))?`https://markets.hankyung.com/stock/${data.company.stockCode}/consensus`:"https://markets.hankyung.com/consensus";
+  $("#hankyung-consensus-link").href=hankyungReportSearchUrl(data.company);
   $("#company-research-list").innerHTML=items.length?items.map(item=>`<a class="company-research-item" href="${esc(item.url)}" target="_blank" rel="noopener"><span><b>${esc(item.title||"제목 없음")}</b><small>${esc(item.broker||"작성기관 확인 필요")} · ${esc(item.date?dateText(String(item.date).replace(/\D/g,"")):"작성일 확인 필요")}</small></span><em>원문 보기 ↗</em></a>`).join(""):`<div class="research-empty"><b>연결된 최신 리포트가 없습니다.</b><span>${esc(data.research?.error||"종목 리포트가 제공되지 않으면 리포트 화면에서 기업명으로 다시 검색해 보세요.")}</span></div>`;
 }
 function downloadCsv(data){

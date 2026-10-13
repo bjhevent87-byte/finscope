@@ -1,6 +1,7 @@
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 // Every FinScope screen loads this shared script, so the guide stays available across menus.
-import("/ai-guide.js?v=1").catch(() => {});
+import("/ai-guide.js?v=2").catch(() => {});
+import("/sidebar-icons.js?v=1").catch(() => {});
 let installPrompt = null;
 let installButton = null;
 

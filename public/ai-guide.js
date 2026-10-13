@@ -27,7 +27,7 @@ function selectedCompany() {
 
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
-stylesheet.href = "/ai-guide.css?v=1";
+stylesheet.href = "/ai-guide.css?v=2";
 document.head.append(stylesheet);
 
 const trigger = document.createElement("button");
@@ -50,9 +50,11 @@ panel.setAttribute("aria-labelledby", "ai-guide-title");
 panel.innerHTML = `
   <div class="ai-guide-head"><div><small>FINSCOPE AI GUIDE</small><h2 id="ai-guide-title">무엇을 살펴볼까요?</h2></div><button class="ai-guide-close" type="button" aria-label="길잡이 닫기">×</button></div>
   <div class="ai-guide-body">
-    <p class="ai-guide-intro">원하는 분석을 쉬운 말로 적어 주세요. 자주 묻는 질문은 AI 비용 없이 바로 안내합니다.</p>
+    <p class="ai-guide-intro">원하는 내용을 적거나 아래에서 메뉴를 바로 골라보세요. 기본 안내는 API 비용 없이 이용할 수 있습니다.</p>
     <p class="ai-guide-context"></p>
     <div class="ai-guide-examples" aria-label="예시 질문"></div>
+    <div class="ai-guide-menu-head"><strong>전체 메뉴 바로가기</strong><span>8개 화면 모두 안내합니다</span></div>
+    <nav class="ai-guide-menu" aria-label="FinScope 전체 메뉴"></nav>
     <div class="ai-guide-answer" aria-live="polite"></div>
   </div>
   <form class="ai-guide-form"><label for="ai-guide-question">궁금한 점</label><div class="ai-guide-form-row"><input id="ai-guide-question" type="text" maxlength="240" autocomplete="off" placeholder="예: ROE가 뭐야?" /><button type="submit">안내받기</button></div><button class="ai-guide-ai-button" type="button" hidden>AI로 질문 분류하기</button><p class="ai-guide-foot">AI는 질문에 맞는 화면만 찾습니다. 재무 수치·전망·매수 추천을 만들지 않습니다. 개인정보는 입력하지 마세요.</p></form>`;
@@ -63,7 +65,25 @@ const answerBox = panel.querySelector(".ai-guide-answer");
 const aiButton = panel.querySelector(".ai-guide-ai-button");
 const context = panel.querySelector(".ai-guide-context");
 const exampleBox = panel.querySelector(".ai-guide-examples");
+const menuBox = panel.querySelector(".ai-guide-menu");
 const allowedHrefs = new Set(Object.values(GUIDE_ROUTES).map((item) => item.href));
+Object.entries(GUIDE_ROUTES).forEach(([key, route], index) => {
+  const link = document.createElement("a");
+  link.href = route.href;
+  link.className = key === page ? "active" : "";
+  if (key === page) link.setAttribute("aria-current", "page");
+  const number = document.createElement("span");
+  number.className = "ai-guide-menu-number";
+  number.textContent = String(index + 1).padStart(2, "0");
+  const words = document.createElement("span");
+  const label = document.createElement("strong");
+  label.textContent = route.menuLabel;
+  const hint = document.createElement("small");
+  hint.textContent = route.menuHint;
+  words.append(label, hint);
+  link.append(number, words);
+  menuBox.append(link);
+});
 let aiAvailable = false;
 fetch("/api/ai-guide/status", { credentials: "same-origin", signal: AbortSignal.timeout(5000) })
   .then((response) => response.ok ? response.json() : null)
@@ -105,6 +125,7 @@ function submitQuestion(question) {
   if (answer.kind === "unknown" && !aiAvailable) answer.note = "AI 질문 분류는 아직 설정되지 않았습니다. 아래 무료 안내 링크를 이용해 주세요.";
   renderAnswer(answer);
   aiButton.hidden = answer.kind !== "unknown" || !aiAvailable;
+  answerBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
   return answer;
 }
 
@@ -120,7 +141,7 @@ function openPanel() {
     button.addEventListener("click", () => submitQuestion(item));
     exampleBox.append(button);
   }
-  if (!answerBox.childElementCount) renderAnswer({ title: "질문에서 시작해 보세요", text: "용어 설명, 기업 비교, 공시 확인 등 보고 싶은 내용을 적어 주세요.", links: [] });
+  if (!answerBox.childElementCount) renderAnswer({ title: "모든 메뉴를 안내합니다", text: "질문을 적거나 아래에서 보고 싶은 화면을 직접 선택해 보세요.", links: [] });
   questionInput.focus();
 }
 

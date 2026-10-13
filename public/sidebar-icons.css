@@ -1,0 +1,5 @@
+.workspace-navigation .workspace-side>a>.fs-nav-icon,.side-nav>a>.fs-nav-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#ecf2fa;color:#637fa6;font-size:initial;transition:background .16s,color .16s,transform .16s}
+.workspace-navigation .workspace-side>a>.fs-nav-icon svg,.side-nav>a>.fs-nav-icon svg{display:block;width:18px;height:18px;overflow:visible}
+.workspace-navigation .workspace-side>a:hover>.fs-nav-icon,.workspace-navigation .workspace-side>a.active>.fs-nav-icon,.side-nav>a:hover>.fs-nav-icon,.side-nav>a.active>.fs-nav-icon{background:#d5e7ff;color:#1769d2;transform:scale(1.04)}
+.workspace-navigation .workspace-side>a.unavailable>.fs-nav-icon{background:#f0f2f5;color:#a4afbd}
+@media(max-width:1120px){.workspace-navigation .workspace-side>a>.fs-nav-icon,.side-nav>a>.fs-nav-icon{flex-basis:26px;width:26px;height:26px}.workspace-navigation .workspace-side>a>.fs-nav-icon svg,.side-nav>a>.fs-nav-icon svg{width:16px;height:16px}}
