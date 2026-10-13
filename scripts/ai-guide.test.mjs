@@ -6,6 +6,13 @@ import { aiGuideStatus, classifyWithOpenAI, handleAiGuide } from "../ai-guide-ap
 
 test("common questions and terms are answered without model-generated numbers", () => {
   assert.equal(guideAnswer("ROE가 뭐야?").kind, "faq");
+  for (const question of ["PER이 뭐야?", "PBR은 어떻게 봐?", "매출성장률은 어떻게 계산해?"]) {
+    const answer = guideAnswer(question);
+    assert.equal(answer.kind, "faq", question);
+    assert.equal(answer.links[0]?.href, GUIDE_ROUTES.compare.href, question);
+  }
+  assert.equal(guideAnswer("매출성장률은 어떻게 계산해?").title, "매출성장률 이해하기");
+  assert.equal(guideAnswer("모르는 임의의 질문").kind, "unknown");
   assert.equal(guideAnswer("안전한 기업 찾아줘").kind, "clarify");
   assert.equal(guideAnswer("돈 잘 버는 반도체 기업").kind, "clarify");
   assert.equal(guideAnswer("삼성전자 재무제표", { companyName: "삼성전자" }).kind, "route");

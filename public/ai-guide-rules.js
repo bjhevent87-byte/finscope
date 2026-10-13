@@ -11,7 +11,12 @@ export const GUIDE_ROUTES = Object.freeze({
 });
 
 const TERMS = [
+  { pattern: /\bPER\b|주가수익비율|주가수익률/i, term: "PER", description: "주가를 주당순이익(EPS)으로 나눈 값입니다. 이익 대비 주가가 몇 배인지 보여 주지만, 이익이 적자이거나 일시적으로 변하면 해석이 어려워요. 같은 업종의 기업과 함께 비교하세요.", route: "compare" },
+  { pattern: /\bPBR\b|주가순자산비율/i, term: "PBR", description: "주가를 주당순자산(BPS)으로 나눈 값입니다. 순자산 대비 주가 수준을 보여 주지만, 낮다는 이유만으로 저평가라고 단정할 수는 없어요. 수익성과 업종을 함께 보세요.", route: "compare" },
+  { pattern: /매출\s*(?:액\s*)?(?:성장률|증가율)|매출이?\s*(?:얼마나\s*)?(?:늘었|증가했)/i, term: "매출성장률", description: "이전 기간보다 매출이 얼마나 늘거나 줄었는지 나타내는 비율입니다. (이번 매출−이전 매출)÷이전 매출로 계산해요. 연간은 전년과, 분기는 전년 같은 분기와 비교하세요.", route: "compare" },
   { pattern: /\bROE\b|자기자본이익률/i, term: "ROE", description: "자기자본으로 얼마의 순이익을 냈는지 보는 비율입니다. 업종과 기간을 맞춰 비교하세요.", route: "compare" },
+  { pattern: /영업이익률/i, term: "영업이익률", description: "매출 중 영업이익이 차지하는 비율입니다. 본업에서 남긴 이익을 보되, 같은 업종·같은 기간의 기업끼리 비교하세요. 금융업에는 일반 제조업과 같은 기준을 적용하기 어렵습니다.", route: "compare" },
+  { pattern: /\bEPS\b|주당순이익/i, term: "EPS", description: "주식 한 주에 해당하는 순이익입니다. 일회성 손익과 주식 수 변화를 확인하고 PER과 함께 읽어 보세요.", route: "compare" },
   { pattern: /\bFCF\b|잉여현금흐름/i, term: "FCF", description: "영업에서 들어온 현금에서 설비투자 등에 쓴 현금을 뺀 값입니다. 일시적인 투자 때문에 음수가 될 수도 있어요.", route: "company" },
   { pattern: /\bBSI\b|업황\s*지수|기업경기실사지수/i, term: "업황 BSI", description: "기업이 체감한 업황을 조사한 지표입니다. 기준점과 조사 시점, 업종을 함께 보세요.", route: "home" },
   { pattern: /부채비율/i, term: "부채비율", description: "자기자본에 비해 부채가 어느 정도인지 나타냅니다. 금융업과 비금융업은 같은 잣대로 비교하기 어렵습니다.", route: "compare" },
@@ -41,7 +46,7 @@ export function guideAnswer(question, context = {}) {
     return { kind: "clarify", title: "‘좋은 기업’의 기준을 먼저 정해 볼까요?", text: "이익률, 자기자본이익률, 현금흐름은 서로 다른 강점입니다. 업종을 고르고 기준을 정해 비교해 보세요.", links: [{ label: "조건으로 기업 비교", href: GUIDE_ROUTES.compare.href }, { label: "한 기업 깊이 보기", href: GUIDE_ROUTES.company.href }] };
   }
   const term = TERMS.find((item) => item.pattern.test(text));
-  if (term) return { kind: "faq", source: "fixed", title: `${term.term}란?`, text: term.description, links: [{ label: GUIDE_ROUTES[term.route].label, href: GUIDE_ROUTES[term.route].href }] };
+  if (term) return { kind: "faq", source: "fixed", title: `${term.term} 이해하기`, text: term.description, links: [{ label: GUIDE_ROUTES[term.route].label, href: GUIDE_ROUTES[term.route].href }] };
   const rules = [
     [/데이터\s*실험실|상관|산점도|시차|이동\s*상관|산업\s*스트레스|시장\s*변화와\s*업종|두\s*(?:지표|데이터)|환율.*(?:주가|금리)|(?:주가|금리).*환율/i, "correlation"],
     [/ETF|상장지수펀드|\bNAV\b|추적\s*오차/i, "etf"],
@@ -58,5 +63,5 @@ export function guideAnswer(question, context = {}) {
     if (match[1] === "company" && context.companyName) answer.text = `${context.companyName}의 공시 재무와 기준일을 기업 분석 화면에서 확인해 보세요. 화면의 값을 확인하기 전에는 수치를 단정하지 않습니다.`;
     return answer;
   }
-  return { kind: "unknown", title: "어느 메뉴로 갈지 함께 골라볼까요?", text: "질문을 조금 더 구체적으로 적거나 아래 전체 메뉴에서 원하는 화면을 바로 선택해 보세요.", links: [{ label: "홈 둘러보기", href: GUIDE_ROUTES.home.href }, { label: "데이터 실험실", href: GUIDE_ROUTES.correlation.href }] };
+  return { kind: "unknown", title: "질문을 조금만 더 구체적으로 적어 주세요", text: "아직 이 질문의 뜻을 정확히 파악하지 못했습니다. ‘PER 뜻’, ‘기업 비교 방법’, ‘DART 공시 확인’처럼 묻거나 질문 목록에서 골라 주세요.", links: [{ label: "기업 비교", href: GUIDE_ROUTES.compare.href }, { label: "기업 분석", href: GUIDE_ROUTES.company.href }] };
 }
