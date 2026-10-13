@@ -29,6 +29,7 @@
 .ai-guide-answer-badge{display:inline-block;margin-bottom:7px;color:#246be1;font-size:12px;font-weight:800}
 .ai-guide-answer h3{margin:0 0 7px;font-size:19px;line-height:1.4}
 .ai-guide-answer p{margin:0;color:#3e5270}
+.ai-guide-answer .ai-guide-evidence{margin-top:10px;color:#286dec;font-size:12px;font-weight:700}
 .ai-guide-answer .ai-guide-note{margin-top:8px;font-size:13px;color:#637896}
 .ai-guide-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
 .ai-guide-links:empty{display:none}

@@ -25,6 +25,11 @@ const TERMS = [
   { pattern: /상관계수|상관관계/i, term: "상관계수", description: "두 값이 같은 방향 또는 반대 방향으로 움직이는 정도입니다. 함께 움직였다는 사실만으로 원인을 알 수는 없어요.", route: "correlation" },
 ];
 
+// Only these reviewed explanations may be supplied as context to the optional model.
+export const GUIDE_FACTS = Object.freeze(TERMS.map((item, index) => Object.freeze({
+  id: `term-${index + 1}`, label: item.term, text: item.description, route: item.route,
+})));
+
 export function routeAnswer(route, source = "guide") {
   const target = GUIDE_ROUTES[route] || GUIDE_ROUTES.home;
   return { kind: "route", source, title: target.label, text: target.detail, links: [{ label: target.label, href: target.href }] };

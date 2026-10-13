@@ -31,7 +31,7 @@ function selectedCompany() {
 
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
-stylesheet.href = "/ai-guide.css?v=3";
+stylesheet.href = "/ai-guide.css?v=4";
 document.head.append(stylesheet);
 
 const trigger = document.createElement("button");
@@ -62,7 +62,7 @@ panel.innerHTML = `
     <nav class="ai-guide-menu" aria-label="FinScope 전체 메뉴"></nav>
     <div class="ai-guide-answer" aria-live="polite"></div>
   </div>
-  <form class="ai-guide-form"><label for="ai-guide-question">궁금한 점</label><div class="ai-guide-form-row"><input id="ai-guide-question" type="text" maxlength="240" autocomplete="off" placeholder="예: PER은 어떻게 읽나요?" /><button type="submit">안내받기</button></div><button class="ai-guide-ai-button" type="button" hidden>AI에게 화면 추천받기</button><p class="ai-guide-foot">확인되지 않은 기업 수치나 투자 전망은 만들지 않습니다. 개인정보는 입력하지 마세요.</p></form>`;
+  <form class="ai-guide-form"><label for="ai-guide-question">궁금한 점</label><div class="ai-guide-form-row"><input id="ai-guide-question" type="text" maxlength="240" autocomplete="off" placeholder="예: PER은 어떻게 읽나요?" /><button type="submit">안내받기</button></div><button class="ai-guide-ai-button" type="button" hidden>AI로 자세히 듣기</button><p class="ai-guide-foot">AI 설명은 버튼을 누를 때만 요청합니다. 확인되지 않은 기업 수치나 투자 전망은 만들지 않습니다. 개인정보는 입력하지 마세요.</p></form>`;
 document.body.append(backdrop, panel);
 
 const questionInput = panel.querySelector("#ai-guide-question");
@@ -108,21 +108,28 @@ for (const group of questionGroups) {
   questionGroupsBox.append(section);
 }
 let aiAvailable = false;
+let aiDailyLimit = 1;
 fetch("/api/ai-guide/status", { credentials: "same-origin", signal: AbortSignal.timeout(5000) })
   .then((response) => response.ok ? response.json() : null)
-  .then((status) => { aiAvailable = status?.available === true; })
+  .then((status) => { aiAvailable = status?.available === true; aiDailyLimit = Number(status?.dailyLimit) || 1; })
   .catch(() => { aiAvailable = false; });
 
 function renderAnswer(answer) {
   answerBox.replaceChildren();
   const badge = document.createElement("span");
   badge.className = "ai-guide-answer-badge";
-  badge.textContent = answer.source === "ai" ? "AI가 화면을 추천" : "FinScope 안내";
+  badge.textContent = answer.source === "ai" ? "AI 설명 · FinScope 근거" : "FinScope 안내";
   const heading = document.createElement("h3");
   heading.textContent = answer.title || "안내";
   const paragraph = document.createElement("p");
   paragraph.textContent = answer.text || "";
   answerBox.append(badge, heading, paragraph);
+  if (Array.isArray(answer.evidence) && answer.evidence.length) {
+    const evidence = document.createElement("p");
+    evidence.className = "ai-guide-evidence";
+    evidence.textContent = `참고한 설명: ${answer.evidence.join(" · ")}`;
+    answerBox.append(evidence);
+  }
   if (answer.note) {
     const note = document.createElement("p");
     note.className = "ai-guide-note";
@@ -147,7 +154,7 @@ function submitQuestion(question) {
   const answer = guideAnswer(normalized, { companyName: selectedCompany() });
   if (answer.kind === "unknown" && !aiAvailable) answer.note = "질문 목록에서 비슷한 예시를 고르거나 원하는 메뉴를 선택해 주세요.";
   renderAnswer(answer);
-  aiButton.hidden = answer.kind !== "unknown" || !aiAvailable;
+  aiButton.hidden = !aiAvailable || ["restricted", "empty"].includes(answer.kind);
   answerBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
   return answer;
 }
@@ -182,11 +189,11 @@ panel.querySelector(".ai-guide-form").addEventListener("submit", (event) => { ev
 aiButton.addEventListener("click", async () => {
   if (!questionInput.value.trim()) return;
   aiButton.disabled = true;
-  aiButton.textContent = "질문 목적을 확인하는 중…";
+  aiButton.textContent = "근거를 확인하는 중…";
   try {
     const response = await fetch("/api/ai-guide", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: questionInput.value.trim(), page }), signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify({ question: questionInput.value.trim(), page, mode: "explain" }), signal: AbortSignal.timeout(15_000),
     });
     const result = await response.json();
     renderAnswer(result.title ? result : { title: "연결을 확인해 주세요", text: result.error || "잠시 후 다시 시도해 주세요.", links: [] });
@@ -194,6 +201,7 @@ aiButton.addEventListener("click", async () => {
     renderAnswer({ title: "AI 연결을 확인해 주세요", text: "지금은 질문 목록이나 메뉴를 이용해 주세요. 잠시 후 다시 시도해 주세요.", links: [] });
   } finally {
     aiButton.disabled = false;
-    aiButton.textContent = "AI에게 화면 추천받기";
+    aiButton.textContent = "AI로 자세히 듣기";
+    if (aiDailyLimit <= 1) { aiAvailable = false; aiButton.hidden = true; }
   }
 });

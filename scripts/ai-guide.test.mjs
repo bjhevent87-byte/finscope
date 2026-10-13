@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import { guideAnswer, GUIDE_ROUTES } from "../public/ai-guide-rules.js";
-import { aiGuideStatus, classifyWithOpenAI, handleAiGuide } from "../ai-guide-api.mjs";
+import { aiGuideStatus, classifyWithOpenAI, explainWithOpenAI, handleAiGuide } from "../ai-guide-api.mjs";
 
 test("common questions and terms are answered without model-generated numbers", () => {
   assert.equal(guideAnswer("ROE가 뭐야?").kind, "faq");
@@ -44,6 +44,29 @@ test("AI is disabled unless both switch and server-side key are present", () => 
   assert.equal(aiGuideStatus({ OPENAI_API_KEY: "test" }).available, false);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true" }).available, false);
   assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true", OPENAI_API_KEY: "test" }).available, true);
+  assert.equal(aiGuideStatus({ FINSCOPE_AI_ENABLED: "true", OPENAI_API_KEY: "test" }).dailyLimit, 1);
+});
+
+test("optional explanation uses reviewed facts, a strict schema, and a short output cap", async () => {
+  let sent;
+  const fakeFetch = async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ status: "completed", output: [{ content: [{ type: "output_text", text: JSON.stringify({ status: "answered", route: "compare", answer: "PER과 매출성장률은 서로 다른 지표입니다. 이익 대비 주가와 전년 대비 매출 변화를 함께 보세요.", evidenceIds: ["term-1", "term-3"] }) }] }], usage: { input_tokens: 700, output_tokens: 90 } }) };
+  };
+  const result = await explainWithOpenAI("PER과 매출성장률을 함께 봐야 해?", "compare", "test-key", "gpt-6-luna", fakeFetch);
+  assert.equal(result.status, "answered");
+  assert.deepEqual(result.usage, { inputTokens: 700, outputTokens: 90 });
+  assert.equal(sent.store, false);
+  assert.equal(sent.max_output_tokens, 350);
+  assert.equal(sent.reasoning.effort, "none");
+  assert.equal(sent.text.format.strict, true);
+  assert.equal(sent.tools, undefined);
+  assert.ok(sent.input.includes("매출성장률"));
+});
+
+test("optional explanation rejects numbers absent from its cited facts", async () => {
+  const fakeFetch = async () => ({ ok: true, json: async () => ({ status: "completed", output: [{ content: [{ type: "output_text", text: JSON.stringify({ status: "answered", route: "compare", answer: "PER이 999배라면 무조건 좋은 기업입니다.", evidenceIds: ["term-1"] }) }] }] }) });
+  await assert.rejects(explainWithOpenAI("PER은?", "compare", "test-key", "gpt-6-luna", fakeFetch), /unsupported_number/);
 });
 
 test("model call only returns a schema-constrained route and never sends financial data", async () => {
@@ -61,8 +84,8 @@ test("model call only returns a schema-constrained route and never sends financi
   assert.equal(sent.tools, undefined);
 });
 
-function request(question, headers = {}) {
-  const req = Readable.from([Buffer.from(JSON.stringify({ question, page: "company" }))]);
+function request(question, headers = {}, mode) {
+  const req = Readable.from([Buffer.from(JSON.stringify({ question, page: "company", ...(mode ? { mode } : {}) }))]);
   req.method = "POST";
   req.headers = { host: "localhost:4173", origin: "http://localhost:4173", "content-type": "application/json", ...headers };
   return req;
@@ -75,6 +98,16 @@ test("server returns free guidance with no API key", async () => {
   assert.equal(result.status, 200);
   assert.equal(result.body.source, "fixed");
   assert.ok(result.body.links.length);
+});
+
+test("optional explanation stays off without a key and rejects investment recommendations", async () => {
+  let result;
+  const send = (_res, status, body) => { result = { status, body }; };
+  await handleAiGuide(request("PER과 매출성장률은 어떻게 달라?", {}, "explain"), {}, new URL("http://localhost:4173/api/ai-guide"), {}, send, () => "test");
+  assert.equal(result.status, 200);
+  assert.equal(result.body.source, "fixed");
+  await handleAiGuide(request("삼성전자 목표주가 알려줘", {}, "explain"), {}, new URL("http://localhost:4173/api/ai-guide"), { FINSCOPE_AI_ENABLED: "true", OPENAI_API_KEY: "test" }, send, () => "test");
+  assert.equal(result.body.kind, "restricted");
 });
 
 test("cross-origin request is rejected before any paid call", async () => {
