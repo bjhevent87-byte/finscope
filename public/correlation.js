@@ -1,4 +1,5 @@
 import { $, nav, setupMarketGuide, setupSearch } from "./pages.js?v=21";
+import { isNumericObservation as finite, monthlyLast, monthlyChanges as changes, lastCompletedMonthEnd, hasConsecutiveMonthlyRows } from "./correlation-data.js";
 
 $("#nav").innerHTML = nav("correlation");
 const correlationPage = document.querySelector(".correlation-page");
@@ -54,7 +55,6 @@ setupMarketGuide($(".analysis-controls"), (company) => {
 const compact = (date) => date.toISOString().slice(0, 10).replaceAll("-", "");
 const monthSerial = (month) => Number(month.slice(0, 4)) * 12 + Number(month.slice(4, 6)) - 1;
 const serialMonth = (value) => `${Math.floor(value / 12)}${String((value % 12) + 1).padStart(2, "0")}`;
-const finite = (value) => Number.isFinite(Number(value));
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 
 async function fetchJson(url) {
@@ -62,32 +62,6 @@ async function fetchJson(url) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.error) throw new Error(payload.error || `데이터 요청 실패 (${response.status})`);
   return payload;
-}
-
-function monthlyLast(rows, field) {
-  const result = new Map();
-  rows.forEach((row) => {
-    const date = String(row.date || "").replace(/\D/g, "");
-    const value = Number(row[field]);
-    if (date.length < 6 || !Number.isFinite(value)) return;
-    result.set(date.slice(0, 6), value);
-  });
-  return result;
-}
-
-function changes(levels, mode) {
-  const months = [...levels.keys()].sort();
-  const result = new Map();
-  months.forEach((month, index) => {
-    const interval = mode === "yoy" ? 12 : 1;
-    if (index < interval) return;
-    const previousMonth = months[index - interval];
-    if (monthSerial(month) - monthSerial(previousMonth) !== interval) return;
-    const current = levels.get(month), previous = levels.get(previousMonth);
-    if (!finite(current) || !finite(previous) || (!previous && mode !== "point")) return;
-    result.set(month, mode === "point" ? current - previous : ((current / previous) - 1) * 100);
-  });
-  return result;
 }
 
 function macroChanges(payload, id) {
@@ -290,6 +264,7 @@ function rollingStatistics(rows, windowSize, method) {
   const values = [];
   for (let index = windowSize - 1; index < rows.length; index += 1) {
     const sample = rows.slice(index - windowSize + 1, index + 1);
+    if (!hasConsecutiveMonthlyRows(sample)) continue;
     const result = statistics(sample, method);
     if (finite(result.correlation)) values.push({ month: rows[index].month, value: result.correlation });
   }
@@ -398,7 +373,8 @@ $("#run-analysis").onclick = async () => {
   enterAnalysisFocus();
   const mode = $("#analysis-mode").value;
   if (mode === "company-macro" && !selectedCompany) { $("#analysis-status").textContent = "먼저 분석할 기업을 검색해 선택해 주세요."; return; }
-  const years = Number($("#analysis-years").value), end = new Date(), begin = new Date(end); begin.setFullYear(begin.getFullYear() - years);
+  const years = Number($("#analysis-years").value), end = lastCompletedMonthEnd(), begin = new Date(end);
+  begin.setUTCFullYear(begin.getUTCFullYear() - years);
   const seriesBId = $("#macro-series").value;
   const method = $("#correlation-method").value;
   $("#analysis-status").className = "status"; $("#analysis-status").textContent = "두 데이터에서 같은 달의 값을 찾아 비교하고 있어요.";

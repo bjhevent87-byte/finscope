@@ -685,7 +685,7 @@ async function searchCompanies(query, limit = 12) {
   try { activeCodes = await activeListingCodes(); } catch {}
   const exactCode = q.replace(/\D/g, "").slice(-6);
   return list
-    .filter((item) => item.name.toLowerCase().includes(q) || stockDisplayName(item).toLowerCase().includes(q) || item.stockCode.includes(q))
+    .filter((item) => item.corpCode === q || item.name.toLowerCase().includes(q) || stockDisplayName(item).toLowerCase().includes(q) || item.stockCode.includes(q))
     .map((item) => ({
       ...item,
       name: stockDisplayName(item),

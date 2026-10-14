@@ -46,6 +46,13 @@ test("Vercel function can read the bundled company list", async () => {
   assert.ok(payload.some((company) => company.name === "삼성전자"));
 });
 
+test("company deep link can resolve an exact DART corporation code", async () => {
+  const response = await fetch(`${baseUrl}/api/index?__path=companies&q=00126380`);
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.ok(payload.some((company) => company.corpCode === "00126380" && company.stockCode === "005930"));
+});
+
 test("company agent route exists and rejects untrusted requests before any paid call", async () => {
   const get = await fetch(`${baseUrl}/api/index?__path=company-agent`);
   assert.equal(get.status, 405);

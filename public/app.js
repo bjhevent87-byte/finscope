@@ -1,5 +1,6 @@
 import { CRITERION_GROUPS } from "./criterion-groups.js";
 import { assessCriteria, rankByCriteria } from "./criteria-score.js";
+import { financialAxisRange } from "./chart-scale.js";
 
 const state = {
   selected: JSON.parse(localStorage.getItem("compareCompanies") || "[]"),
@@ -275,7 +276,7 @@ function renderCriterionCatalog() {
       const metric = metrics[key];
       const guide = metricGuides[key] || { operator: ">=", value: 0, text: metricDescriptions[key] };
       const selected = selectedMetrics.has(key);
-      return `<button type="button" class="criterion-preset ${selected ? "is-selected" : ""}" data-criterion-metric="${key}"><b>${selected ? "✓" : "+"} ${metric.label}</b><span>${metricGuides[key] ? `${guide.operator} ${guide.value}${metric.unit}` : "기준 직접 설정"}</span><small>${guide.text}</small></button>`;
+      return `<button type="button" class="criterion-preset ${selected ? "is-selected" : ""}" data-criterion-metric="${key}" aria-pressed="${selected}"><b>${selected ? "✓" : "+"} ${metric.label}</b><span>${metricGuides[key] ? `${guide.operator} ${guide.value}${metric.unit}` : "기준 직접 설정"}</span><small>${guide.text}</small></button>`;
     }).join("")}</div>`;
   document.querySelectorAll("[data-criterion-group]").forEach((button) => button.addEventListener("click", () => {
     state.criterionGroup = button.dataset.criterionGroup;
@@ -286,16 +287,15 @@ function renderCriterionCatalog() {
     const metric = button.dataset.criterionMetric;
     const existingIndex = state.criteria.findIndex((criterion) => criterion.metric === metric);
     if (existingIndex >= 0) {
-      $(".criterion-catalog").open = false;
-      document.querySelector(`.criterion-row[data-index="${existingIndex}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      $("#criterion-add-status").textContent = `${metrics[metric].label}은 이미 조건에 있습니다. 위쪽에서 기준을 바꿀 수 있어요.`;
       return;
     }
     const guide = metricGuides[metric] || { operator: ">=", value: 0 };
     state.criteria.push({ metric, operator: guide.operator, value: guide.value });
     state.metric = metric;
     savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults();
-    $(".criterion-catalog").open = false;
-    document.querySelector(`.criterion-row[data-index="${state.criteria.length - 1}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    $("#criterion-add-status").textContent = `${metrics[metric].label}을 조건에 추가했습니다. 다른 지표를 계속 고를 수 있어요.`;
+    document.querySelector(`[data-criterion-metric="${metric}"]`)?.focus();
   }));
 }
 
@@ -511,7 +511,7 @@ function chartDateRange(period) {
 }
 
 async function loadLongMarket(period, target = "return") {
-  const companies = target === "return" ? chartCompanies(4) : orderedCompanies();
+  const companies = target === "return" ? chartCompanies(5) : orderedCompanies();
   if (!companies.length) return null;
   const range = chartDateRange(period), codes = companies.map((item) => item.corpCode).join(",");
   const key = `${codes}:${range.beginDate}:${range.endDate}`;
@@ -661,24 +661,16 @@ function renderChart(hoverIndex = null) {
   $("#chart-title").textContent = `${metric.label} 추이`;
   const years = state.data.years;
   const series = companies.map((company, index) => ({ name: company.name, corpCode: company.corpCode, color: colors[index], values: years.map((year) => company.financials.find((item) => item.year === year)?.[state.metric] ?? null) }));
-  $("#chart-legend").innerHTML = series.map((item) => `<span><i style="background:${item.color}"></i>${item.name}</span>`).join("") + `<span class="chart-limit-note">${chartScopeLabel(allCompanies.length, 5)} · ${$("#financial-scale").value === "readable" ? "가독성 축" : "전체 값 축"}</span>`;
+  $("#chart-legend").innerHTML = series.map((item) => `<span><i style="background:${item.color}"></i>${item.name}</span>`).join("") + `<span class="chart-limit-note">${chartScopeLabel(allCompanies.length, 5)} · ${$("#financial-scale").value === "readable" ? "변화 확대 · 모든 값 표시" : "0 포함 전체 범위"}</span>`;
   const values = series.flatMap((item) => item.values).filter(Number.isFinite);
   if (!values.length) { ctx.fillStyle = "#66716b"; ctx.fillText("표시할 데이터가 없습니다.", 20, 40); return; }
-  let min = Math.min(...values), max = Math.max(...values);
-  if ($("#financial-scale").value === "readable" && values.length >= 8) {
-    const sorted = [...values].sort((a, b) => a - b);
-    const quantile = (ratio) => { const position = (sorted.length - 1) * ratio, lower = Math.floor(position), upper = Math.ceil(position); return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower); };
-    const low = quantile(.1), high = quantile(.9), readableRange = high - low;
-    if (readableRange > 0 && (max - min) > readableRange * 2.4) { min = low - readableRange * .18; max = high + readableRange * .18; }
-  }
-  if (min === max) { min *= .9; max *= 1.1; }
-  const range = max - min || 1; min -= range * .12; max += range * .12;
+  const { min, max } = financialAxisRange(values, { includeZero: $("#financial-scale").value === "full" });
   const x = (index) => pad.left + (index / Math.max(years.length - 1, 1)) * (width - pad.left - pad.right);
-  const y = (value) => pad.top + ((max - Math.max(min, Math.min(max, value))) / (max - min)) * (height - pad.top - pad.bottom);
+  const y = (value) => pad.top + ((max - value) / (max - min)) * (height - pad.top - pad.bottom);
   ctx.font = "11px Noto Sans KR"; ctx.textAlign = "right"; ctx.fillStyle = "#7a847e"; ctx.strokeStyle = "#e5e9e5"; ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) { const value = min + ((max - min) * i / 4); const py = y(value); ctx.beginPath(); ctx.moveTo(pad.left, py); ctx.lineTo(width - pad.right, py); ctx.stroke(); ctx.fillText(metric.format(value), pad.left - 9, py + 4); }
   ctx.textAlign = "center"; years.forEach((year, index) => ctx.fillText(year, x(index), height - 12));
-  series.forEach((item) => { ctx.strokeStyle = item.color; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.beginPath(); let started = false; item.values.forEach((value, index) => { if (!Number.isFinite(value)) { started = false; return; } started ? ctx.lineTo(x(index), y(value)) : ctx.moveTo(x(index), y(value)); started = true; }); ctx.stroke(); item.values.forEach((value, index) => { if (!Number.isFinite(value)) return; const clipped = value < min || value > max; ctx.fillStyle = clipped ? item.color : "#fff"; ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x(index), y(value), clipped ? 6 : 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }); });
+  series.forEach((item) => { ctx.strokeStyle = item.color; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.beginPath(); let started = false; item.values.forEach((value, index) => { if (!Number.isFinite(value)) { started = false; return; } started ? ctx.lineTo(x(index), y(value)) : ctx.moveTo(x(index), y(value)); started = true; }); ctx.stroke(); item.values.forEach((value, index) => { if (!Number.isFinite(value)) return; ctx.fillStyle = "#fff"; ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x(index), y(value), 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }); });
   if (Number.isInteger(hoverIndex)) {
     ctx.strokeStyle = "rgba(24,37,31,.35)"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(x(hoverIndex), pad.top); ctx.lineTo(x(hoverIndex), height - pad.bottom); ctx.stroke(); ctx.setLineDash([]);
@@ -790,7 +782,7 @@ async function renderReturnChart(hoverIndex = null) {
   const canvas = $("#return-chart");
   if (!canvas || !state.data?.companies?.length) return;
   const allDisplayCompanies = orderedCompanies();
-  const displayCompanies = chartCompanies(4);
+  const displayCompanies = chartCompanies(5);
   if (!displayCompanies.length) {
     const rect = canvas.getBoundingClientRect(), ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, rect.width, rect.height); ctx.fillStyle = "#66716b"; ctx.font = "14px Noto Sans KR"; ctx.fillText("현재 조건을 통과한 기업이 없습니다.", 24, 42);
@@ -817,7 +809,7 @@ async function renderReturnChart(hoverIndex = null) {
   const seenIndustries = new Set();
   displayCompanies.forEach((company, index) => { const benchmark = state.benchmarks[company.corpCode]; if (!benchmark?.returnHistory?.length || seenIndustries.has(benchmark.industry)) return; seenIndustries.add(benchmark.industry); const map = new Map(benchmark.returnHistory.map((row) => [row.date, row.value])); series.push({ name: `${benchmark.industry} 업종 평균`, industry: benchmark.industry, color: colors[index % colors.length], dash: true, values: fullDates.map((date) => map.get(date) ?? null) }); });
   const industryByName = new Map(series.filter((item) => item.dash).map((item) => [item.industry, item]));
-  $("#return-chart-legend").innerHTML = `<div class="legend-pairs">${companySeries.map((item) => { const industry = industryByName.get(item.industry); return `<span class="legend-pair"><b><i class="line-swatch" style="--line:${item.color}"></i>${item.name}</b>${industry ? `<em><i class="line-swatch dashed" style="--line:${industry.color}"></i>${industry.name}</em>` : ""}</span>`; }).join("")}</div><span><i class="line-swatch" style="--line:#111827"></i>KOSPI 200</span><span class="chart-limit-note">${chartScopeLabel(allDisplayCompanies.length, 4)}</span>`;
+  $("#return-chart-legend").innerHTML = `<div class="legend-pairs">${companySeries.map((item) => { const industry = industryByName.get(item.industry); return `<span class="legend-pair"><b><i class="line-swatch" style="--line:${item.color}"></i>${item.name}</b>${industry ? `<em><i class="line-swatch dashed" style="--line:${industry.color}"></i>${industry.name}</em>` : ""}</span>`; }).join("")}</div><span><i class="line-swatch" style="--line:#111827"></i>KOSPI 200</span><span class="chart-limit-note">${chartScopeLabel(allDisplayCompanies.length, 5)}</span>`;
   const startIndex = Math.max(0, Math.floor((fullDates.length - 1) * state.returnView.start)), endIndex = Math.max(startIndex + 1, Math.ceil((fullDates.length - 1) * state.returnView.end));
   const dates = fullDates.slice(startIndex, endIndex + 1);
   series.forEach((item) => { item.values = item.values.slice(startIndex, endIndex + 1); });

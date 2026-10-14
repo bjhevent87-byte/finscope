@@ -54,6 +54,8 @@
 .compare-page .criterion-row .criterion-remove:hover{border-color:#ef9aa4;background:#fff3f5;color:#b5273b}
 .compare-page .filter-toggle-copy small{color:#40546e;font-size:14px}
 .compare-page .criterion-catalog>summary{display:flex;align-items:center;min-height:50px;padding:12px 15px;color:#1556b0;font-size:16px;line-height:1.4}
+.compare-page .criterion-add-status{margin:0 15px 15px;color:#1b5a9e;font-size:14px;line-height:1.5}
+.compare-page .criterion-add-status:empty{display:none}
 .compare-page .criterion-group-tabs{gap:9px;padding-bottom:12px}
 .compare-page .criterion-group-tab{min-height:46px;padding:10px 14px;color:#304663;font-size:14px}
 .compare-page .criterion-group-tab small{color:#4c5f7b;font-size:13px}

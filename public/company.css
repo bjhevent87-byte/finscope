@@ -50,6 +50,17 @@
 .company-start .toolbar{display:grid;grid-template-columns:minmax(220px,1.6fr) minmax(150px,.9fr) minmax(170px,1fr) auto;gap:10px;align-items:end}
 .company-start .toolbar .field,.company-start .toolbar .wide{min-width:0}.company-start .toolbar input,.company-start .toolbar select{width:100%;height:46px;background:#fff;font-size:15px}
 .company-start .toolbar .button{height:46px;white-space:nowrap;font-size:15px}.company-start .status{margin:9px 0 0;padding:0;text-align:left;color:#53677f;font-size:14px;line-height:1.5}
+.company-compare-basket[hidden]{display:none!important}
+.company-page>.company-compare-basket{margin:16px 0;padding:22px 26px;border:1px solid #dce6f3;border-radius:22px;background:#fff}
+.company-compare-basket-head h2{margin:5px 0;font-size:22px;line-height:1.3;color:#172033}
+.company-compare-basket-head p:last-child{margin:0;color:#445874;font-size:15px;line-height:1.5}
+.company-compare-basket-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:15px}
+.company-compare-basket-item{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-width:0;min-height:66px;padding:10px 13px;border:1px solid #dce5f1;border-radius:12px;background:#f8fbff;color:#172033;text-align:left;cursor:pointer}
+.company-compare-basket-item strong{max-width:100%;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.company-compare-basket-item span{margin-top:3px;color:#526379;font-size:13px;line-height:1.3}
+.company-compare-basket-item:hover,.company-compare-basket-item:focus-visible{border-color:#3182f6;background:#eef6ff;outline-color:#3182f6}
+.company-compare-basket-item.selected{border-color:#3182f6;background:#e8f2ff;box-shadow:inset 3px 0 #3182f6}
+.company-compare-basket-item.selected strong{color:#1769d2}
 .workspace-navigation .company-page>.analysis-entry{margin-top:0;padding:0;border:0;background:transparent;box-shadow:none}
 .company-agent{margin-top:0}.company-agent-scope{margin-top:11px}.company-agent-scope p{margin:7px 0 0;color:#526379;font-size:14px;line-height:1.6}
 .company-agent-result{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;padding:14px;background:#f5f9ff}
@@ -69,6 +80,6 @@
 .health-card{min-height:150px}.health-value{font-size:27px}.health-context{margin-top:8px}.health-context p{margin:7px 0 0;color:#53677f;font-size:14px;line-height:1.6}
 .factor-context{margin-top:12px}.factor-context p{margin:7px 0 0;color:#526379;font-size:14px;line-height:1.55}
 .market-metric small,.market-metric span{font-size:14px;line-height:1.5}.market-metric b{font-size:23px}
-@media(max-width:1200px){.company-start .toolbar{grid-template-columns:minmax(210px,1.4fr) repeat(2,minmax(155px,1fr))}.company-start .toolbar .button{grid-column:1/-1}}
-@media(max-width:900px){.company-start .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.company-start .toolbar .wide{grid-column:1/-1}.company-start .toolbar .button{grid-column:1/-1}.company-agent-result{grid-template-columns:1fr}}
-@media(max-width:560px){.workspace-navigation .company-page .company-hero{padding:24px 20px}.workspace-navigation .company-page .company-hero h1{font-size:32px}.company-start .toolbar{grid-template-columns:1fr}.company-start .toolbar .field,.company-start .toolbar .wide,.company-start .toolbar .button{grid-column:1}.company-agent-figures{grid-template-columns:1fr}.company-agent-figure{min-height:70px}.decision-card{padding:23px 20px}.decision-card h2{font-size:32px}.decision-actions{width:100%}.decision-actions a{flex:1;justify-content:center}.decision-evidence{grid-template-columns:1fr}}
+@media(max-width:1200px){.company-start .toolbar{grid-template-columns:minmax(210px,1.4fr) repeat(2,minmax(155px,1fr))}.company-start .toolbar .button{grid-column:1/-1}.company-compare-basket-list{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:900px){.company-start .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.company-start .toolbar .wide{grid-column:1/-1}.company-start .toolbar .button{grid-column:1/-1}.company-agent-result{grid-template-columns:1fr}.company-compare-basket-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.workspace-navigation .company-page .company-hero{padding:24px 20px}.workspace-navigation .company-page .company-hero h1{font-size:32px}.company-start .toolbar{grid-template-columns:1fr}.company-start .toolbar .field,.company-start .toolbar .wide,.company-start .toolbar .button{grid-column:1}.company-agent-figures{grid-template-columns:1fr}.company-agent-figure{min-height:70px}.decision-card{padding:23px 20px}.decision-card h2{font-size:32px}.decision-actions{width:100%}.decision-actions a{flex:1;justify-content:center}.decision-evidence{grid-template-columns:1fr}.company-page>.company-compare-basket{padding:20px}.company-compare-basket-list{grid-template-columns:repeat(2,minmax(0,1fr))}}

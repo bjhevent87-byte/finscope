@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="limitations.css?v=5" />
     <link rel="stylesheet" href="workspace-unified.css?v=7" />
     <link rel="stylesheet" href="compare-mobile.css?v=1" />
-    <link rel="stylesheet" href="assessment.css?v=2" />
+    <link rel="stylesheet" href="assessment.css?v=3" />
     <script defer src="/pwa.js?v=7"></script>
   </head>
   <body class="workspace-navigation compare-page">
@@ -111,7 +111,7 @@
           </div>
           <div class="criteria-list" id="criteria-list"></div>
           <label class="filter-toggle"><input type="checkbox" id="filter-passed" /><span class="filter-toggle-copy"><strong>조건 통과 기업만 표시</strong><small>기본은 비교함 전체 기업입니다. 켜면 카드·표·차트에서 통과 기업만 볼 수 있습니다.</small></span><b class="filter-count" id="filter-count" aria-live="polite">분석 후 결과 표시</b></label>
-          <details class="metric-catalog criterion-catalog"><summary>지표 더 보기 · 성장성 / 수익성 / 안정성 / 현금흐름</summary><div id="criterion-catalog"></div></details>
+          <details class="metric-catalog criterion-catalog"><summary>지표 더 보기 · 성장성 / 수익성 / 안정성 / 현금흐름</summary><div id="criterion-catalog"></div><p class="criterion-add-status" id="criterion-add-status" role="status" aria-live="polite"></p></details>
         </section>
 
         <div class="status-panel" id="status-panel" role="status" aria-live="polite">
@@ -142,13 +142,13 @@
                 <div class="inline-metrics" id="chart-metric-buttons"></div>
                 <button class="chart-mode active" data-chart-mode="financial">재무 추이</button>
                 <button class="chart-mode" data-chart-mode="price">주가·이동평균선</button>
-                <select id="financial-scale" aria-label="재무 차트 축 범위"><option value="readable">변화 확대</option><option value="full">전체 범위</option></select>
+                <select id="financial-scale" aria-label="재무 차트 축 범위"><option value="readable">변화 확대 · 모든 값</option><option value="full">0 포함 전체 범위</option></select>
                 <select id="price-company-select" hidden aria-label="주가 차트 기업 선택"></select>
                 <select id="price-period" hidden aria-label="주가 차트 기간"><option value="1">1년</option><option value="3">3년</option><option value="5">5년</option><option value="max">최대</option></select>
                 <label class="ma-control" id="ma-control" hidden>이동평균선 <input id="ma-periods" value="5, 20, 60, 120" inputmode="numeric" aria-label="이동평균선 기간" /><button id="apply-ma" type="button">적용</button></label>
               </div>
             </div>
-            <div class="chart-selection"><label for="chart-selection-mode">재무·수익률 차트에 표시할 기업 <select id="chart-selection-mode"><option value="automatic">현재 정렬의 앞 5개</option><option value="manual">직접 고르기</option></select></label><div id="chart-company-options" class="chart-company-options" hidden></div><p>앞 5개는 추천 기업이 아닙니다. 최대 5개를 직접 고를 수 있어요. 수익률 차트는 앞 4개, 주가·이동평균선 차트는 위에서 선택한 한 기업을 표시합니다.</p></div>
+            <div class="chart-selection"><label for="chart-selection-mode">재무·수익률 차트에 표시할 기업 <select id="chart-selection-mode"><option value="automatic">현재 정렬의 앞 5개</option><option value="manual">직접 고르기</option></select></label><div id="chart-company-options" class="chart-company-options" hidden></div><p>앞 5개는 추천 기업이 아닙니다. 재무·수익률 차트 모두 최대 5개를 직접 고를 수 있어요. 주가·이동평균선 차트는 위에서 선택한 한 기업을 표시합니다.</p></div>
             <div class="legend" id="chart-legend"></div>
             <p class="chart-instruction">차트 위에 마우스를 올리면 해당 시점의 값이 선 위의 원과 작은 설명창으로 표시됩니다.</p>
             <div class="chart-wrap"><canvas id="trend-chart"></canvas><div class="canvas-tooltip" id="trend-tooltip" hidden></div></div>
@@ -181,6 +181,6 @@
     </main>
 
     <footer><span>© 2026 FinScope</span><span><a href="#data-policy">데이터 이용 및 면책</a> · 좋은 기업 ≠ 언제나 좋은 투자</span></footer>
-    <script type="module" src="app.js?v=22"></script>
+    <script type="module" src="app.js?v=23"></script>
   </body>
 </html>

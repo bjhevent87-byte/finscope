@@ -2,7 +2,7 @@ import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=22";
 import{hankyungReportSearchUrl,stockDisplayName}from"./stock-identity.js";
 import{assessCompany,assessmentThreshold}from"./company-assessment.js";
 $("#nav").innerHTML=nav("company");
-let selected=null,analysis=null;
+let selected=null,analysis=null,analysisRequestId=0;
 const finite=Number.isFinite;
 const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const dateText=value=>value?`${value.slice(0,4)}-${value.slice(4,6)}-${value.slice(6,8)}`:"기준일 없음";
@@ -13,12 +13,70 @@ const average=values=>{const valid=values.filter(finite);return valid.length?val
 const std=values=>{const mean=average(values);return finite(mean)&&values.length>1?Math.sqrt(values.reduce((sum,value)=>sum+(value-mean)**2,0)/(values.length-1)):null};
 const fetchJson=async url=>{const response=await fetch(url),payload=await response.json().catch(()=>({}));if(!response.ok||payload.error)throw new Error(payload.error||`데이터 요청 실패 (${response.status})`);return payload};
 const range=()=>{const end=new Date(),start=new Date(end),value=$("#price-period").value;if(value==="max")start.setFullYear(2020,0,1);else start.setFullYear(start.getFullYear()-Number(value));const compact=date=>date.toISOString().slice(0,10).replaceAll("-","");return{beginDate:compact(start),endDate:compact(end)}};
-const selectCompany=company=>{selected=company;$("#search").value=company.name;$("#company-agent-selected").textContent=`선택한 기업: ${company.name}`;$("#company-agent-result").hidden=true;$("#company-agent-result").replaceChildren();localStorage.setItem("activeCompany",JSON.stringify(company))};
+const selectCompany=company=>{
+  const picked={...company,name:company.name||company.stockCode||company.corpCode};
+  if(selected?.corpCode!==picked.corpCode){
+    analysisRequestId++;
+    analysis=null;
+    $("#content").hidden=true;
+  }
+  selected=picked;
+  $("#search").value=picked.name;
+  $("#company-agent-selected").textContent=`선택한 기업: ${picked.name}`;
+  $("#company-agent-result").hidden=true;
+  $("#company-agent-result").replaceChildren();
+  $("#status").hidden=false;
+  $("#status").textContent=`${picked.name} 선택됨 · 분석 목적을 확인한 뒤 ‘기업 분석하기’를 눌러주세요.`;
+  localStorage.setItem("activeCompany",JSON.stringify(picked));
+  markComparedSelection();
+};
+
+function comparedCompanies(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("compareCompanies")||"[]");
+    if(!Array.isArray(saved))return[];
+    const seen=new Set();
+    return saved.filter(company=>{
+      const code=String(company?.corpCode||"");
+      if(!/^\d{8}$/.test(code)||seen.has(code))return false;
+      seen.add(code);return true;
+    }).slice(0,10);
+  }catch{return[]}
+}
+function markComparedSelection(){
+  const basket=$("#company-compare-basket");
+  if(!basket)return;
+  basket.querySelectorAll("[data-compare-corp]").forEach(button=>{
+    const active=button.dataset.compareCorp===String(selected?.corpCode||"");
+    button.classList.toggle("selected",active);
+    button.setAttribute("aria-pressed",String(active));
+  });
+  const hint=$("#company-compare-basket-hint");
+  if(hint)hint.textContent=selected?`${selected.name} 선택됨 · 위에서 분석 목적을 확인하고 분석하기를 눌러주세요.`:"기업명을 누르면 분석할 기업으로 선택됩니다.";
+}
+function renderComparedCompanies(){
+  const basket=$("#company-compare-basket"),list=$("#company-compare-basket-list"),companies=comparedCompanies();
+  basket.hidden=!companies.length;
+  list.replaceChildren();
+  for(const company of companies){
+    const button=document.createElement("button"),name=document.createElement("strong"),code=document.createElement("span");
+    button.type="button";button.className="company-compare-basket-item";button.dataset.compareCorp=String(company.corpCode);
+    button.setAttribute("aria-label",`${company.name||company.stockCode||company.corpCode} 분석할 기업으로 선택`);
+    name.textContent=company.name||company.stockCode||company.corpCode;
+    code.textContent=company.stockCode||"";
+    button.append(name,code);
+    button.addEventListener("click",()=>selectCompany(company));
+    list.append(button);
+  }
+  markComparedSelection();
+}
 
 setupSearch($("#search"),$("#results"),selectCompany);
 setupMarketGuide(document.querySelector(".analysis-entry"),company=>{selectCompany(company);$("#run").click()},"시장과 업종에서 분석할 기업 고르기");
+renderComparedCompanies();
+window.addEventListener("storage",event=>{if(event.key==="compareCompanies")renderComparedCompanies()});
 $("#run").onclick=runAnalysis;
-$("#price-period").onchange=()=>{if(selected)runAnalysis()};
+$("#price-period").onchange=()=>{if(analysis)runAnalysis()};
 $("#analysis-purpose").onchange=()=>{if(analysis)renderDecision(analysis)};
 $("#analysis-csv").onclick=()=>{if(analysis)downloadCsv(analysis)};
 const agentForm=$("#company-agent-form"),agentQuestion=$("#company-agent-question"),agentResult=$("#company-agent-result"),agentSubmit=$("#company-agent-submit");
@@ -62,30 +120,32 @@ agentForm.addEventListener("submit",async event=>{
 
 async function runAnalysis(){
   if(!selected){$("#status").textContent="먼저 분석할 기업을 선택해 주세요.";return}
+  const target=selected,requestId=++analysisRequestId;
   $("#status").hidden=false;$("#status").textContent="DART 재무, KRX 주가, ECOS 환율·금리를 한 기준으로 맞추는 중입니다.";
   try{
-    const year=new Date().getFullYear()-1,dates=range(),query=new URLSearchParams({corpCodes:selected.corpCode,year:String(year),reportCode:"11011",...dates});
-    const updatePromise=fetchJson(`/api/company-update?${new URLSearchParams({corpCode:selected.corpCode,afterYear:String(year-1)})}`).catch(error=>({status:"error",note:error.message}));
+    const year=new Date().getFullYear()-1,dates=range(),query=new URLSearchParams({corpCodes:target.corpCode,year:String(year),reportCode:"11011",...dates});
+    const updatePromise=fetchJson(`/api/company-update?${new URLSearchParams({corpCode:target.corpCode,afterYear:String(year-1)})}`).catch(error=>({status:"error",note:error.message}));
     const [compare,market,benchmark,fx,rate,research]=await Promise.all([
-      fetchJson(`/api/compare?corpCodes=${selected.corpCode}&year=${year}&reportCode=11011`),
-      fetchJson(`/api/backtest-data?${new URLSearchParams({corpCodes:selected.corpCode,...dates})}`),
+      fetchJson(`/api/compare?corpCodes=${target.corpCode}&year=${year}&reportCode=11011`),
+      fetchJson(`/api/backtest-data?${new URLSearchParams({corpCodes:target.corpCode,...dates})}`),
       fetchJson(`/api/benchmarks?${query}`),
       fetchJson(`/api/macro/series?id=usd-krw&beginDate=${dates.beginDate}&endDate=${dates.endDate}`),
       fetchJson(`/api/macro/series?id=kr-base-rate&beginDate=${dates.beginDate}&endDate=${dates.endDate}`),
-      fetchJson(`/api/naver-research?stockCode=${selected.stockCode}`).catch(error=>({items:[],error:error.message})),
+      fetchJson(`/api/naver-research?stockCode=${target.stockCode}`).catch(error=>({items:[],error:error.message})),
     ]);
+    if(requestId!==analysisRequestId)return;
     const company=compare.companies?.[0];if(!company)throw new Error("기업 재무정보를 찾지 못했습니다.");
     company.name=stockDisplayName(company);
     const history=market.companies?.[0]?.history||company.market?.history||[];
     analysis={...buildAnalysis({...company,longHistory:history},benchmark.benchmarks?.[0]||null,{fx,rate},market),research,interim:{status:"loading"}};renderAnalysis(analysis);
     const currentAnalysis=analysis;
     updatePromise.then(update=>{
-      if(analysis!==currentAnalysis||selected?.corpCode!==company.corpCode)return;
+      if(requestId!==analysisRequestId||analysis!==currentAnalysis||selected?.corpCode!==company.corpCode)return;
       analysis.interim=update.status==="ready"&&update.year<=Number(company.latest?.year||0)
         ?{status:"none",note:"최근 연간 사업보고서 이후 새로 확정된 분기·반기 재무제표가 없습니다."}:update;
       renderLatestUpdate(analysis);renderDecision(analysis);
     });
-  }catch(error){$("#status").hidden=false;$("#status").textContent=`분석을 완료하지 못했습니다: ${error.message}`}
+  }catch(error){if(requestId!==analysisRequestId)return;$("#status").hidden=false;$("#status").textContent=`분석을 완료하지 못했습니다: ${error.message}`}
 }
 
 function buildAnalysis(company,benchmark,macro,marketPayload){
@@ -231,4 +291,14 @@ function draw(history){
   const render=active=>{const rect=canvas.getBoundingClientRect(),dpr=devicePixelRatio||1;canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);if(!history.length){ctx.fillStyle="#8b95a1";ctx.font="14px sans-serif";ctx.fillText("표시할 주가 이력이 없습니다.",20,40);return null}const closes=history.map(row=>row.close),pad={l:76,r:24,t:25,b:42},priceBottom=rect.height*.7,volumeTop=rect.height*.79,min=Math.min(...closes)*.94,max=Math.max(...closes)*1.06,x=index=>pad.l+index/Math.max(history.length-1,1)*(rect.width-pad.l-pad.r),y=value=>pad.t+(max-value)/(max-min)*(priceBottom-pad.t),rolling=days=>closes.map((_,index)=>index+1>=days?average(closes.slice(index+1-days,index+1)):null),series=[["종가",closes,"#191f28",2.5],["5일",rolling(5),"#f04452",1.5],["20일",rolling(20),"#3182f6",1.7],["60일",rolling(60),"#14b8a6",1.6],["120일",rolling(120),"#a855f7",1.6]];ctx.font="11px sans-serif";ctx.textAlign="left";for(let i=0;i<5;i++){const value=min+(max-min)*i/4,py=y(value);ctx.strokeStyle="#e5e8eb";ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(rect.width-pad.r,py);ctx.stroke();ctx.fillStyle="#8b95a1";ctx.fillText(Math.round(value).toLocaleString("ko-KR"),4,py+4)}series.forEach(item=>{ctx.strokeStyle=item[2];ctx.lineWidth=item[3];ctx.beginPath();let on=false;item[1].forEach((value,index)=>{if(!finite(value)){on=false;return}on?ctx.lineTo(x(index),y(value)):ctx.moveTo(x(index),y(value));on=true});ctx.stroke()});const volumes=history.map(row=>row.volume||0),vmax=Math.max(...volumes,1),barWidth=Math.max(1,(rect.width-pad.l-pad.r)/history.length*.7);history.forEach((row,index)=>{const height=volumes[index]/vmax*(rect.height-pad.b-volumeTop);ctx.fillStyle=index&&row.close<history[index-1].close?"rgba(49,130,246,.55)":"rgba(240,68,82,.55)";ctx.fillRect(x(index)-barWidth/2,rect.height-pad.b-height,barWidth,height)});ctx.fillStyle="#8b95a1";ctx.textAlign="center";for(let i=0;i<6;i++){const index=Math.round((history.length-1)*i/5),date=history[index]?.date||"";ctx.fillText(`${date.slice(0,4)}-${date.slice(4,6)}`,x(index),rect.height-12)}if(Number.isInteger(active)){ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(25,31,40,.3)";ctx.beginPath();ctx.moveTo(x(active),pad.t);ctx.lineTo(x(active),rect.height-pad.b);ctx.stroke();ctx.setLineDash([]);series.forEach(item=>{const value=item[1][active];if(!finite(value))return;ctx.fillStyle="#fff";ctx.strokeStyle=item[2];ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x(active),y(value),5,0,Math.PI*2);ctx.fill();ctx.stroke()})}return{rect,pad,x,series}};
   let geometry=render(null);canvas.onmousemove=event=>{if(!geometry||!history.length)return;const bounds=canvas.getBoundingClientRect(),{rect,pad,x}=geometry,index=Math.max(0,Math.min(history.length-1,Math.round((event.clientX-bounds.left-pad.l)/(rect.width-pad.l-pad.r)*(history.length-1)))),row=history[index];geometry=render(index);tip.innerHTML=`<b>${dateText(row.date)}</b>${geometry.series.map(item=>`<span>${item[0]} ${won(item[1][index])}</span>`).join("")}<span>거래량 ${Number(row.volume||0).toLocaleString("ko-KR")}주</span>`;tip.hidden=false;tip.style.left=`${Math.max(110,Math.min(rect.width-110,x(index)))}px`;tip.style.top="12px"};canvas.onmouseleave=()=>{geometry=render(null);tip.hidden=true};window.addEventListener("resize",()=>{geometry=render(null)},{once:true});
 }
-try{const saved=JSON.parse(localStorage.getItem("activeCompany")||"null");if(saved?.corpCode){selectCompany(saved);runAnalysis()}}catch{}
+const requestedCorpCode=new URLSearchParams(location.search).get("corpCode");
+if(/^\d{8}$/.test(requestedCorpCode||"")){
+  const known=comparedCompanies().find(company=>company.corpCode===requestedCorpCode);
+  if(known)selectCompany(known);
+  else fetch(`/api/companies?q=${encodeURIComponent(requestedCorpCode)}`).then(response=>response.json()).then(companies=>{
+    if(selected)return;
+    const matched=Array.isArray(companies)?companies.find(company=>company.corpCode===requestedCorpCode):null;
+    if(matched)selectCompany(matched);
+    else $("#status").textContent="링크의 기업을 찾지 못했습니다. 기업명이나 종목코드로 다시 검색해 주세요.";
+  }).catch(()=>{if(!selected)$("#status").textContent="링크의 기업을 불러오지 못했습니다. 기업명이나 종목코드로 검색해 주세요."});
+}
