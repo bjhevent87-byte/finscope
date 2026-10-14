@@ -17,16 +17,19 @@
     <link rel="stylesheet" href="pages-v11.css?v=16" />
     <link rel="stylesheet" href="tooltips.css?v=5" />
     <link rel="stylesheet" href="limitations.css?v=5" />
-    <link rel="stylesheet" href="workspace-unified.css?v=6" />
-    <script defer src="/pwa.js?v=6"></script>
+    <link rel="stylesheet" href="workspace-unified.css?v=7" />
+    <link rel="stylesheet" href="compare-mobile.css?v=1" />
+    <script defer src="/pwa.js?v=7"></script>
   </head>
-  <body class="workspace-navigation">
+  <body class="workspace-navigation compare-page">
     <header class="topbar">
       <a class="brand" href="/"><span class="brand-mark">F</span><span><b>FinScope</b><small>핀스코프</small></span></a>
-      <nav><a href="/">홈</a><a class="active" href="/index.html">기업 비교</a><a href="/company.html">기업 분석</a><a href="/filings.html">DART 공시</a><a href="/research.html">리포트</a><a href="/correlation.html">데이터 실험실</a><a href="/backtest.html">백테스트</a><a href="/etf.html">ETF 비교</a></nav>
+      <button class="compare-menu-toggle" id="compare-menu-toggle" type="button" aria-controls="compare-global-nav" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>전체 메뉴</span></button>
+      <nav id="compare-global-nav" aria-label="전체 메뉴"><a href="/">홈</a><a class="active" href="/index.html">기업 비교</a><a href="/company.html">기업 분석</a><a href="/filings.html">DART 공시</a><a href="/research.html">리포트</a><a href="/correlation.html">데이터 실험실</a><a href="/backtest.html">백테스트</a><a href="/etf.html">ETF 비교</a></nav>
       <span class="data-badge"><i></i> DART · KRX · 금융위원회</span>
     </header>
-    <aside class="workspace-side">
+    <aside class="workspace-side" id="compare-section-links">
+      <button class="compare-sections-toggle" id="compare-sections-toggle" type="button" aria-controls="compare-section-links" aria-expanded="false"><span>이 화면에서 이동</span><strong id="compare-current-section">비교 시작하기</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
       <p>기업 비교</p>
       <a class="active" href="#top"><span>◎</span>비교 시작하기</a><a href="#discovery"><span>⌕</span>기업 고르기</a><a href="#criteria"><span>⚙</span>내 조건 정하기</a><a href="#results"><span>▦</span>결과 비교하기</a><a href="#data-policy"><span>!</span>데이터 기준</a>
       <div class="workspace-side-note"><b>비교하는 순서</b><span>조건을 먼저 정한 뒤 후보를 고르면 비교가 훨씬 쉬워요.</span></div>
@@ -110,7 +113,7 @@
           <details class="metric-catalog criterion-catalog" open><summary>목적별 조건 지표 고르기 · 성장성 / 수익성 / 안정성 / 현금흐름</summary><div id="criterion-catalog"></div></details>
         </section>
 
-        <div class="status-panel" id="status-panel">
+        <div class="status-panel" id="status-panel" role="status" aria-live="polite">
           <div class="spinner"></div><span>데이터 연결을 확인하고 있습니다.</span>
         </div>
 
@@ -122,6 +125,7 @@
 
           <div class="decision-grid" id="decision-grid"></div>
 
+          <p class="mobile-table-hint">비교표는 좌우로 밀어 모든 지표를 확인하세요.</p>
           <div class="table-wrap">
             <table>
               <thead><tr id="table-head"></tr></thead>
@@ -174,6 +178,6 @@
     </main>
 
     <footer><span>© 2026 FinScope</span><span><a href="#data-policy">데이터 이용 및 면책</a> · 좋은 기업 ≠ 언제나 좋은 투자</span></footer>
-    <script type="module" src="app.js?v=19"></script>
+    <script type="module" src="app.js?v=20"></script>
   </body>
 </html>

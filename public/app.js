@@ -823,8 +823,38 @@ async function init() {
 init();
 
 const compareSideLinks = [...document.querySelectorAll(".workspace-side a[href^='#']")];
-const activateCompareSideLink = (link) => compareSideLinks.forEach((item) => item.classList.toggle("active", item === link));
-compareSideLinks.forEach((link) => link.addEventListener("click", () => activateCompareSideLink(link)));
+const compareMenuButton = $("#compare-menu-toggle");
+const compareSectionsButton = $("#compare-sections-toggle");
+const closeCompareMobileMenus = () => {
+  document.body.classList.remove("compare-menu-open", "compare-sections-open");
+  compareMenuButton.setAttribute("aria-expanded", "false");
+  compareSectionsButton.setAttribute("aria-expanded", "false");
+};
+compareMenuButton.addEventListener("click", () => {
+  const open = !document.body.classList.contains("compare-menu-open");
+  closeCompareMobileMenus();
+  document.body.classList.toggle("compare-menu-open", open);
+  compareMenuButton.setAttribute("aria-expanded", String(open));
+});
+compareSectionsButton.addEventListener("click", () => {
+  const open = !document.body.classList.contains("compare-sections-open");
+  closeCompareMobileMenus();
+  document.body.classList.toggle("compare-sections-open", open);
+  compareSectionsButton.setAttribute("aria-expanded", String(open));
+});
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeCompareMobileMenus(); });
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".topbar, .workspace-side")) closeCompareMobileMenus();
+});
+window.addEventListener("resize", () => { if (window.innerWidth > 760) closeCompareMobileMenus(); });
+const activateCompareSideLink = (link) => {
+  compareSideLinks.forEach((item) => item.classList.toggle("active", item === link));
+  $("#compare-current-section").textContent = link.lastChild?.textContent?.trim() || link.textContent.trim();
+};
+compareSideLinks.forEach((link) => link.addEventListener("click", () => {
+  activateCompareSideLink(link);
+  closeCompareMobileMenus();
+}));
 if ("IntersectionObserver" in window) {
   const observer = new IntersectionObserver((entries) => {
     const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
