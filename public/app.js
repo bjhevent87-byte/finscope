@@ -294,8 +294,11 @@ function renderCriterionCatalog() {
     state.criteria.push({ metric, operator: guide.operator, value: guide.value });
     state.metric = metric;
     savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults();
+    button.classList.add("is-selected");
+    button.setAttribute("aria-pressed", "true");
+    button.querySelector("b").textContent = `✓ ${metrics[metric].label}`;
     $("#criterion-add-status").textContent = `${metrics[metric].label}을 조건에 추가했습니다. 다른 지표를 계속 고를 수 있어요.`;
-    document.querySelector(`[data-criterion-metric="${metric}"]`)?.focus();
+    button.focus();
   }));
 }
 
