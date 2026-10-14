@@ -73,7 +73,7 @@ export function nav(active) {
   const localMenus = {
     correlation: [["#relationship-overview", "◎", "처음 보기"], ["#analysis-examples", "☆", "궁금한 질문 고르기"], ["#analysis-settings", "⚙", "두 데이터 비교"], ["#scatter-analysis", "⌁", "월별 움직임"], ["#matrix-analysis", "▦", "관계의 방향"], ["#lag-analysis", "↔", "먼저 움직인 쪽"], ["#rolling-analysis", "∿", "시간별 관계 변화"], ["#method-guide", "?", "계산 방법"], ["#industry-lab", "◆", "시장 변화와 업종"]],
     mission: [["#mission-overview", "◆", "처음 보기"], ["#mission-result", "▦", "업종별 결과"], ["#mission-chart", "↗", "업종 움직임"], ["#company-check", "◎", "대표기업 주가"], ["#mission-method", "?", "계산 방법"]],
-    company: [["#company-overview", "◎", "분석 시작"], ["#company-analysis", "⌕", "기업·목적 선택"], ["#decision", "✓", "한 줄 결론"], ["#latest-disclosure", "▣", "최신 확정 실적"], ["#company-assessment", "◈", "평가 근거"], ["#company-agent", "✦", "공시 근거 AI 질문"], ["#financial-health", "▦", "재무 상태"], ["#external-factors", "↔", "환율·금리 관계"], ["#market-behavior", "↗", "주가·거래량"], ["#financials", "≡", "연도별 재무"], ["#company-research", "▤", "관련 리포트"], ["#analysis-method", "?", "분석 기준"]],
+    company: [["#company-overview", "◎", "분석 시작"], ["#company-analysis", "⌕", "기업·목적 선택"], ["#decision", "✓", "기업 개요"], ["#latest-disclosure", "▣", "최신 확정 실적"], ["#company-assessment", "◈", "평가 근거"], ["#company-agent", "✦", "공시 근거 AI 질문"], ["#financial-health", "▦", "재무 상태"], ["#external-factors", "↔", "환율·금리 관계"], ["#market-behavior", "↗", "주가·거래량"], ["#financials", "≡", "연도별 재무"], ["#company-research", "▤", "관련 리포트"], ["#analysis-method", "?", "분석 기준"]],
     filings: [["#filings-overview", "◎", "공시 한눈에"], ["#filing-search", "⌕", "기업·기간 선택"], ["#list", "▤", "결과 보기"]],
     research: [["#research-overview", "◎", "리포트 한눈에"], ["#research-search", "⌕", "기업 고르기"], ["#links", "↗", "리포트 찾기"], ["#research-policy", "!", "확인할 점"]],
     backtest: [["#backtest-overview", "◎", "처음 보기"], ["#backtest-builder", "+", "자산 담기"], ["#weights", "%", "비중 정하기"], ["#summary", "▦", "결과 비교"], ["#backtest-policy", "!", "꼭 확인할 점"]],
@@ -82,7 +82,7 @@ export function nav(active) {
   const sideTitles = { correlation: "데이터 실험실", company: "기업 분석", filings: "DART 공시", research: "리포트", backtest: "백테스트", etf: "ETF 비교", mission: "환율·금리 업종 비교" };
   const sideNotes = {
     correlation: ["질문부터 골라보세요", "예시 질문을 고르면 필요한 데이터와 분석 방법이 자동으로 설정돼요."],
-    company: ["읽는 순서", "한 줄 결론 → 재무 상태 → 환율·금리 관계 → 공시 원문 순서로 확인해보세요."],
+    company: ["읽는 순서", "기업 개요 → 최신 실적 → 재무 상태 → 공시 원문 순서로 확인해보세요."],
     filings: ["원문도 확인하세요", "공시 제목을 누르면 DART 원문에서 내용을 직접 확인할 수 있어요."],
     research: ["확인 순서", "요약보다 작성일·작성기관·원문 내용을 먼저 확인해보세요."],
     backtest: ["빠르게 시작하기", "예시 구성을 고르면 투자 비중을 하나씩 입력하지 않아도 돼요."],

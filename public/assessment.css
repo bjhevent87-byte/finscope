@@ -1,18 +1,35 @@
 .results-actions{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
 .results-actions label,.chart-selection>label{display:grid;gap:5px;color:#53677f;font-size:13px;font-weight:750}
 .results-actions select,.chart-selection select{min-height:38px;padding:0 12px;border:1px solid #d4deeb;border-radius:10px;background:#fff;color:#172033;font:inherit;font-size:14px}
-.comparison-assessment{margin:18px 0 24px;padding:20px;border:1px solid #dce6f3;border-radius:18px;background:#f7faff}
-.comparison-assessment-heading h4{margin:0;color:#172033;font-size:19px}
-.comparison-assessment-heading p,.assessment-footnote{margin:7px 0 0;color:#586b83;font-size:14px;line-height:1.6}
-.comparison-assessment-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.comparison-assessment-card{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px 16px;min-width:0;padding:13px 15px;border:1px solid #dfe7f1;border-radius:13px;background:#fff}
-.comparison-assessment-card>div:first-child{min-width:0}.comparison-assessment-card>div:first-child b,.comparison-assessment-card>div:first-child small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.comparison-assessment-card>div:first-child b{color:#172033;font-size:15px}.comparison-assessment-card>div:first-child small{margin-top:3px;color:#64758d;font-size:12px}
-.comparison-assessment-card>strong{color:#1769d2;font-size:17px;white-space:nowrap}.comparison-assessment-card>span{color:#4e6077;font-size:13px;white-space:nowrap}
-.comparison-assessment-card details{grid-column:1/-1}.comparison-assessment-card summary,.assessment-card summary{cursor:pointer;color:#1769d2;font-size:13px;font-weight:750}
-.comparison-assessment-card ul,.assessment-card ul{display:grid;gap:7px;margin:10px 0 0;padding:0;list-style:none}
-.comparison-assessment-card li,.assessment-card li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 10px;border-radius:9px;background:#f5f8fc;font-size:13px}
-.comparison-assessment-card li span,.assessment-card li span{min-width:0;overflow-wrap:anywhere}.comparison-assessment-card li small,.assessment-card li small{color:#697b91}.comparison-assessment-card li b,.assessment-card li b{color:#516179}
-.comparison-assessment-more{margin-top:12px}.comparison-assessment-more>summary{cursor:pointer;color:#1769d2;font-size:14px;font-weight:750}
+.comparison-assessment{margin:22px 0 26px;padding:24px;border:1px solid #dce6f3;border-radius:18px;background:#f7faff}
+.comparison-assessment-heading h4{margin:0;color:#172033;font-size:23px}
+.comparison-assessment-heading p{margin:8px 0 0;color:#44546a;font-size:16px;line-height:1.55}
+.comparison-assessment-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.comparison-assessment-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px 16px;min-width:0;padding:19px;border:1px solid #d7e3f1;border-radius:15px;background:#fff}
+.comparison-assessment-card .assessment-company{min-width:0}
+.comparison-assessment-card .assessment-company b,.comparison-assessment-card .assessment-company small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comparison-assessment-card .assessment-company b{color:#172033;font-size:18px}
+.comparison-assessment-card .assessment-company small{margin-top:4px;color:#53647b;font-size:14px}
+.comparison-assessment-card .assessment-score{color:#1769d2;font-size:28px;line-height:1.1;white-space:nowrap}
+.comparison-assessment-card .assessment-score small{font-size:15px;margin-left:2px}
+.comparison-assessment-card .assessment-score .assessment-unscored{color:#52647b;font-size:16px}
+.comparison-assessment-card .assessment-status{grid-column:1/-1;margin:0;color:#253b56;font-size:16px;font-weight:700;line-height:1.5}
+.comparison-assessment-card .assessment-status span{display:block;color:#56677d;font-size:14px;font-weight:500}
+.comparison-assessment-card details{grid-column:1/-1;border-top:1px solid #e7edf5;padding-top:10px}
+.comparison-assessment-card summary,.assessment-method>summary{cursor:pointer;color:#1769d2;font-size:15px;font-weight:750}
+.comparison-assessment-card ul,.assessment-card ul{display:grid;gap:7px;margin:11px 0 0;padding:0;list-style:none}
+.comparison-assessment-card li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-radius:9px;background:#f5f8fc}
+.comparison-assessment-card li span{min-width:0;overflow-wrap:anywhere}
+.comparison-assessment-card li span b{display:block;color:#172033;font-size:15px}
+.comparison-assessment-card li span small{display:block;margin-top:3px;color:#50647c;font-size:14px;line-height:1.5}
+.comparison-assessment-card .criterion-verdict{color:#9a3a3a;font-size:14px;white-space:nowrap}
+.comparison-assessment-card .criterion-verdict.is-met{color:#087451}
+.comparison-assessment-more{margin-top:16px}.comparison-assessment-more>summary{cursor:pointer;color:#1769d2;font-size:15px;font-weight:750}
+.assessment-method{margin-top:18px}.assessment-method p{max-width:72ch;margin:8px 0 0;color:#44546a;font-size:14px;line-height:1.6}
+.single-metric-rank{margin:0 0 24px}.single-metric-rank>summary{cursor:pointer;color:#1769d2;font-size:15px;font-weight:750}.single-metric-rank .decision-grid{margin-top:12px}
+.assessment-card summary{cursor:pointer;color:#1769d2;font-size:13px;font-weight:750}
+.assessment-card li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 10px;border-radius:9px;background:#f5f8fc;font-size:13px}
+.assessment-card li span{min-width:0;overflow-wrap:anywhere}.assessment-card li small{color:#697b91}.assessment-card li b{color:#516179}
 .chart-selection{display:flex;align-items:end;flex-wrap:wrap;gap:10px 20px;margin:15px 0 5px;padding:14px 16px;border:1px solid #dce6f3;border-radius:13px;background:#fff}
 .chart-selection>p{flex:1 1 320px;margin:0;color:#596d84;font-size:13px;line-height:1.55}
 .chart-company-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;flex:1 1 100%}
@@ -23,3 +40,63 @@
 .assessment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}.assessment-card{min-width:0;padding:20px;border:1px solid #dce6f3;border-radius:15px;background:#f8fbff}.assessment-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}.assessment-head span{color:#53677f;font-size:15px;font-weight:750}.assessment-head strong{color:#1769d2;font-size:24px}.assessment-card>p{min-height:45px;color:#586d84;font-size:14px;line-height:1.6}.assessment-card .assessment-good{color:#07875e}.assessment-card .assessment-caution{color:#d35939}
 @media(max-width:900px){.comparison-assessment-list,.assessment-grid{grid-template-columns:1fr}.chart-company-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:640px){.results-actions{width:100%}.results-actions label,.results-actions select,.results-actions button{width:100%}.comparison-assessment{padding:15px}.comparison-assessment-card{grid-template-columns:minmax(0,1fr) auto}.comparison-assessment-card>span{grid-column:1/-1}.comparison-assessment-card li,.assessment-card li{grid-template-columns:minmax(0,1fr) auto}.comparison-assessment-card li small,.assessment-card li small{grid-column:1/-1}.chart-company-options{grid-template-columns:repeat(2,minmax(0,1fr))}.latest-grid{grid-template-columns:1fr}.latest-grid article strong{font-size:22px}}
+
+/* The chosen conditions are the primary task; explanations live in the catalog below. */
+.compare-page .criteria-panel{padding:28px 30px;border:1px solid #e0e8f2;border-radius:22px;background:#f7f9fc}
+.compare-page .criteria-panel .panel-heading{margin-bottom:20px;align-items:center}
+.compare-page .criteria-panel .panel-heading h3{color:#172033;font-size:24px}
+.compare-page .criteria-panel .panel-heading p{display:block;max-width:64ch;margin-top:5px;color:#44546a;font-size:16px;line-height:1.5}
+.compare-page #add-criterion{min-height:44px;padding:10px 16px;font-size:15px;white-space:nowrap}
+.compare-page .criteria-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.compare-page .criterion-row{display:grid;grid-template-columns:minmax(0,1fr) 82px 104px 44px;gap:10px;align-items:center;min-width:0;min-height:74px;padding:14px 16px;border:1px solid #dce5f0;border-radius:14px;background:#fff}
+.compare-page .criterion-row select,.compare-page .criterion-row input{min-width:0;min-height:44px;padding:9px 11px;border-color:#d5e0ed;background:#fff;color:#172033;font-size:16px;line-height:1.4}
+.compare-page .criterion-row .criterion-remove{display:grid;place-items:center;width:44px;height:44px;border:1px solid #dce5f0;border-radius:10px;color:#52647b;font-size:23px;line-height:1}
+.compare-page .criterion-row .criterion-remove:hover{border-color:#ef9aa4;background:#fff3f5;color:#b5273b}
+.compare-page .filter-toggle-copy small{color:#40546e;font-size:14px}
+.compare-page .criterion-catalog>summary{display:flex;align-items:center;min-height:50px;padding:12px 15px;color:#1556b0;font-size:16px;line-height:1.4}
+.compare-page .criterion-group-tabs{gap:9px;padding-bottom:12px}
+.compare-page .criterion-group-tab{min-height:46px;padding:10px 14px;color:#304663;font-size:14px}
+.compare-page .criterion-group-tab small{color:#4c5f7b;font-size:13px}
+.compare-page .criterion-group-info{padding:15px 17px}
+.compare-page .criterion-group-info strong{font-size:17px}
+.compare-page .criterion-group-info p{color:#314b6c;font-size:15px;line-height:1.55}
+.compare-page .criterion-group-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.compare-page .criterion-group-grid .criterion-preset{min-height:0;padding:16px;gap:7px 14px}
+.compare-page .criterion-group-grid .criterion-preset b{color:#172033;font-size:16px}
+.compare-page .criterion-group-grid .criterion-preset span{font-size:14px}
+.compare-page .criterion-group-grid .criterion-preset small{color:#44546a;font-size:14px;line-height:1.5}
+.compare-page .results-actions label{font-size:15px}
+.compare-page .results-actions select{min-height:44px;font-size:15px}
+.compare-page #clear-selected{min-width:78px;white-space:nowrap}
+.compare-page #run-button{min-width:112px;white-space:nowrap}
+@media(min-width:1081px){.compare-page .selected-row{grid-template-columns:auto minmax(0,1fr) auto auto auto auto!important}}
+@media(min-width:1081px) and (max-width:1320px){
+  .compare-page .workspace{grid-template-columns:minmax(0,1fr)!important}
+  .compare-page .selected-row{grid-template-columns:auto minmax(0,1fr) 126px 112px!important}
+  .compare-page .selected-count{grid-column:1;grid-row:1}
+  .compare-page .selected-companies{grid-column:2/4;grid-row:1;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .compare-page #clear-selected{grid-column:4;grid-row:1}
+  .compare-page .selected-row .year-control:first-of-type{grid-column:2;grid-row:2;justify-self:end}
+  .compare-page .selected-row .year-control:last-of-type{grid-column:3;grid-row:2}
+  .compare-page #run-button{grid-column:4;grid-row:2}
+  .compare-page .period-help{grid-column:2/-1;grid-row:3}
+}
+@media(max-width:1280px){.compare-page .criteria-list{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:720px){
+  .compare-page .criteria-panel{padding:18px}
+  .compare-page .criteria-panel .panel-heading{gap:12px;flex-wrap:wrap}
+  .compare-page .criteria-panel .panel-heading h3{font-size:21px}
+  .compare-page .criteria-panel .panel-heading p{font-size:14px}
+  .compare-page #add-criterion{width:100%}
+  .compare-page .criterion-row{grid-template-columns:88px minmax(0,1fr) 44px;grid-template-areas:'metric metric metric' 'operator value remove';gap:9px;padding:13px}
+  .compare-page .criterion-row .criterion-metric{grid-area:metric}
+  .compare-page .criterion-row .criterion-operator{grid-area:operator}
+  .compare-page .criterion-row .criterion-value{grid-area:value}
+  .compare-page .criterion-row .criterion-remove{grid-area:remove}
+  .compare-page .filter-toggle{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:start;gap:8px 12px}
+  .compare-page .filter-toggle input{grid-column:1;grid-row:1}
+  .compare-page .filter-toggle-copy{grid-column:2;grid-row:1}
+  .compare-page .filter-count{grid-column:2;grid-row:2;justify-self:start;margin-left:0}
+  .compare-page .criterion-group-grid{grid-template-columns:minmax(0,1fr)}
+  .compare-page .comparison-assessment-card{padding:16px}
+}

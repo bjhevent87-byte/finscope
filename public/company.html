@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="pages-v11.css?v=17">
     <link rel="stylesheet" href="workspace-refresh.css?v=2">
     <link rel="stylesheet" href="workspace-unified.css?v=7">
-    <link rel="stylesheet" href="company.css?v=4">
-    <link rel="stylesheet" href="assessment.css?v=1">
+    <link rel="stylesheet" href="company.css?v=5">
+    <link rel="stylesheet" href="assessment.css?v=2">
     <script defer src="/pwa.js?v=7"></script>
   </head>
   <body class="workspace-navigation">
@@ -85,13 +85,16 @@
         </section>
 
         <div id="content" hidden>
-          <section class="decision-card" id="decision">
-            <div>
-              <p class="eyebrow">DECISION SUMMARY</p>
-              <h2 id="decision-title">한 줄 결론</h2>
+          <section class="decision-card" id="decision" aria-labelledby="decision-title">
+            <div class="decision-identity">
+              <p class="eyebrow">COMPANY OVERVIEW</p>
+              <h2 id="decision-title">분석할 기업</h2>
               <p id="decision-copy"></p>
             </div>
-            <div class="decision-evidence" id="decision-evidence"></div>
+            <div class="decision-actions" aria-label="분석 결과 바로가기">
+              <a href="#latest-disclosure">최신 실적 보기 ↓</a>
+              <a href="#analysis-method">분석 기준 보기 ↓</a>
+            </div>
           </section>
 
           <section class="analysis-section latest-disclosure" id="latest-disclosure">
@@ -157,16 +160,23 @@
           </section>
 
           <section class="analysis-section methodology" id="analysis-method">
-            <div><p class="eyebrow">HOW TO READ</p><h2>결과를 보기 전에 알아둘 점</h2></div>
-            <ol>
-              <li><b>공시 원문</b><span>DART 공시에서 숫자와 계산 기준을 확인해 주세요. 없는 값은 0으로 채우지 않습니다.</span></li>
-              <li><b>비교 대상</b><span>같은 업종 기업과 지난 실적을 함께 봐야 숫자의 의미를 알 수 있어요.</span></li>
-              <li><b>해석할 때</b><span>이 결과는 투자 추천이나 미래 주가 예측이 아니에요. 함께 움직인 값도 원인과 결과를 뜻하지는 않습니다.</span></li>
-            </ol>
+            <div><p class="eyebrow">HOW TO READ</p><h2>수치와 해석 기준</h2></div>
+            <div class="methodology-content">
+              <p id="decision-purpose-note" class="decision-purpose-note"></p>
+              <ol>
+                <li><b>공시 원문</b><span>DART 공시에서 숫자와 계산 기준을 확인해 주세요. 없는 값은 0으로 채우지 않습니다.</span></li>
+                <li><b>비교 대상</b><span>같은 업종 기업과 지난 실적을 함께 봐야 숫자의 의미를 알 수 있어요.</span></li>
+                <li><b>해석할 때</b><span>이 결과는 투자 추천이나 미래 주가 예측이 아니에요. 함께 움직인 값도 원인과 결과를 뜻하지는 않습니다.</span></li>
+              </ol>
+              <details class="analysis-basis-details">
+                <summary>이 기업에서 확인한 주요 수치 보기</summary>
+                <div class="decision-evidence" id="decision-evidence"></div>
+              </details>
+            </div>
           </section>
         </div>
       </section>
     </main>
-    <script type="module" src="company.js?v=18"></script>
+    <script type="module" src="company.js?v=19"></script>
   </body>
 </html>

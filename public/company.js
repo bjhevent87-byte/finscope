@@ -130,22 +130,28 @@ function renderAnalysis(data){
   $("#decision").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function decisionModel(data){
-  const purpose=$("#analysis-purpose").value,latest=data.latest,evidence=[];let internalRisk=0;
-  if(data.company.isFinancial){if(finite(latest.roe)){evidence.push(`ROE ${percent(latest.roe)}로 업종 내 상대 위치를 함께 확인해야 합니다.`);if(latest.roe<5)internalRisk++}if(finite(latest.netIncome)){evidence.push(`최신 순이익은 ${money(latest.netIncome)}입니다.`);if(latest.netIncome<=0)internalRisk+=2}}
-  else{if(finite(latest.operatingMargin)){evidence.push(`영업이익률 ${percent(latest.operatingMargin)} · ${data.metrics.find(item=>item.key==="operatingMargin")?.state||"추세 확인"}`);if(latest.operatingMargin<5)internalRisk++}if(finite(latest.interestCoverage)){evidence.push(`이자보상배율 ${multiple(latest.interestCoverage)}로 영업이익의 이자 감당력을 확인했습니다.`);if(latest.interestCoverage<3)internalRisk+=2}else evidence.push("이자비용 계정이 없어 이자보상배율은 판단에서 제외했습니다.");if(finite(latest.fcf)){evidence.push(`잉여현금흐름은 ${money(latest.fcf)}입니다.`);if(latest.fcf<0)internalRisk++}}
-  const sensitive=data.sensitivities.filter(item=>finite(item.coefficient)&&Math.abs(item.coefficient)>=.3).sort((a,b)=>Math.abs(b.coefficient)-Math.abs(a.coefficient))[0];if(sensitive)evidence.push(`${sensitive.name}과 월간 주가 수익률의 상관계수는 ${sensitive.coefficient.toFixed(2)} (${sensitive.strength})입니다.`);
-  const purposeLabel={investment:"투자 후보",credit:"여신·상환능력",performance:"경영성과"}[purpose];let title,copy;
-  if(data.company.isFinancial){title=`${data.company.name}: 수익성은 확인되지만 금융업 전용 건전성 지표가 더 필요합니다.`;copy=`${purposeLabel} 관점의 1차 진단입니다. 일반 제조기업의 부채비율·FCF 규칙을 적용하지 않았으며 BIS비율, NIM, 연체율 등 금융업 지표를 공시에서 추가 확인해야 합니다.`}
-  else if(internalRisk>=2){title=`${data.company.name}: 현금흐름과 빚을 감당할 힘을 먼저 살펴보세요.`;copy=`${purposeLabel} 관점에서 현금 창출이나 이자 부담에 주의할 신호가 있어요. 아래 근거와 DART 공시 원문을 확인한 뒤 판단해 주세요.`}
-  else if(sensitive){title=`${data.company.name}: 재무 상태와 ${sensitive.name}의 관계를 함께 보세요.`;copy=`${purposeLabel} 관점에서 뚜렷한 내부 위험 신호는 적지만, ${sensitive.name}과 주가가 함께 움직인 달이 있었어요. 원인과 결과를 뜻하지는 않습니다.`}
-  else{title=`${data.company.name}: 뚜렷한 단일 위험요인보다 추세의 지속성을 확인하세요.`;copy=`${purposeLabel} 관점에서 한 가지 숫자로 단정하기 어렵습니다. 재무 3년 추세, 업종 내 위치, 현금흐름을 함께 읽는 것이 적절합니다.`}
-  return{title,copy,evidence:evidence.slice(0,4)};
+  const purpose=$("#analysis-purpose").value,latest=data.latest||{},financial=data.company.isFinancial;
+  const fact=(label,value,format)=>({label,value,display:format(value)});
+  const facts=financial?{
+    investment:[fact("ROE",latest.roe,percent),fact("순이익",latest.netIncome,money),fact("자기자본",latest.equity,money),fact("배당수익률",data.company.dividend?.dividendYield,percent)],
+    credit:[fact("순이익",latest.netIncome,money),fact("자기자본",latest.equity,money),fact("ROE",latest.roe,percent)],
+    performance:[fact("순이익",latest.netIncome,money),fact("ROE",latest.roe,percent),fact("자기자본",latest.equity,money)],
+  }:{
+    investment:[fact("영업이익률",latest.operatingMargin,percent),fact("ROE",latest.roe,percent),fact("잉여현금흐름",latest.fcf,money),fact("부채비율",latest.debtRatio,percent)],
+    credit:[fact("영업현금흐름",latest.operatingCashFlow,money),fact("이자보상배율",latest.interestCoverage,multiple),fact("부채비율",latest.debtRatio,percent),fact("잉여현금흐름",latest.fcf,money)],
+    performance:[fact("매출",latest.revenue,money),fact("영업이익",latest.operatingProfit,money),fact("영업이익률",latest.operatingMargin,percent),fact("순이익",latest.netIncome,money)],
+  };
+  const purposeLabel={investment:"투자 후보 검토",credit:"여신·상환능력 검토",performance:"경영성과 진단"}[purpose]||"기업 분석";
+  const purposeFocus={investment:"수익성과 현금흐름",credit:"현금흐름과 이자 부담",performance:"매출과 이익의 변화"}[purpose]||"실적";
+  const statementBasis={CFS:"연결",OFS:"별도"}[latest.statementBasis]||latest.statementBasis||"재무제표 기준 확인 필요";
+  const basis=latest.year?`${latest.year}년 사업보고서 · ${statementBasis} 기준`:"연간 재무제표 기준 확인 필요";
+  return{title:data.company.name,basis,purposeLabel,purposeGuide:`${purposeLabel}: ${purposeFocus}에 해당하는 수치를 먼저 보여줍니다. 분석 목적에 따라 여기서 확인할 수치가 달라지지만 원본 자료나 점수 계산은 바뀌지 않습니다.`,evidence:(facts[purpose]||facts.investment).filter(item=>finite(item.value))};
 }
 function renderDecision(data){
-  const model=decisionModel(data),evidence=$("#decision-evidence");$("#decision-title").textContent=model.title;$("#decision-copy").textContent=model.copy;
-  if(data.interim?.status==="ready")$("#decision-copy").textContent+=` 이 판단은 ${data.latest.year}년 연간 재무 기준입니다. ${data.interim.year}년 ${data.interim.reportLabel}에 나온 실적은 바로 아래에서 별도로 비교하세요.`;
-  const row=(text,index)=>`<div class="evidence-row"><b>근거 ${index+1}</b><span>${esc(text)}</span></div>`;
-  evidence.innerHTML=model.evidence.length?`${row(model.evidence[0],0)}${model.evidence.length>1?`<details class="decision-more"><summary>나머지 근거 ${model.evidence.length-1}개 보기</summary>${model.evidence.slice(1).map((text,index)=>row(text,index+1)).join("")}</details>`:""}`:"<p>표시할 비교 근거가 없습니다. 아래 공시 자료를 확인해 주세요.</p>";
+  const model=decisionModel(data),evidence=$("#decision-evidence");$("#decision-title").textContent=model.title;
+  $("#decision-copy").textContent=`${model.basis}${data.interim?.status==="ready"?` · 최신: ${data.interim.year}년 ${data.interim.reportLabel}`:""}`;
+  $("#decision-purpose-note").textContent=model.purposeGuide;
+  evidence.innerHTML=model.evidence.length?model.evidence.map(item=>`<div class="evidence-row"><b>${esc(item.label)}</b><strong>${esc(item.display)}</strong></div>`).join(""):"<p>표시할 주요 수치가 없습니다. 아래 DART 공시 자료를 확인해 주세요.</p>";
 }
 function renderLatestUpdate(data){
   const target=$("#latest-disclosure-content"),update=data.interim;
@@ -217,7 +223,7 @@ function renderResearch(data){
   $("#company-research-list").innerHTML=items.length?items.map(item=>`<a class="company-research-item" href="${esc(item.url)}" target="_blank" rel="noopener"><span><b>${esc(item.title||"제목 없음")}</b><small>${esc(item.broker||"작성기관 확인 필요")} · ${esc(item.date?dateText(String(item.date).replace(/\D/g,"")):"작성일 확인 필요")}</small></span><em>원문 보기 ↗</em></a>`).join(""):`<div class="research-empty"><b>연결된 최신 리포트가 없습니다.</b><span>${esc(data.research?.error||"종목 리포트가 제공되지 않으면 리포트 화면에서 기업명으로 다시 검색해 보세요.")}</span></div>`;
 }
 function downloadCsv(data){
-  const decision=decisionModel(data),rows=[["기업",data.company.name],["종목코드",data.company.stockCode],["업종",data.company.industry],["분석 목적",$("#analysis-purpose").selectedOptions[0].textContent],["한 줄 결론",decision.title],["설명",decision.copy],["생성 시각",data.generatedAt],[],["지표","최신값","3년 분류","업종 비교"],...data.metrics.map(item=>[item.label,item.display,item.state,item.peer]),[],["외부요인","상관계수","강도","공통 관측월"],...data.sensitivities.map(item=>[item.name,finite(item.coefficient)?item.coefficient.toFixed(3):"판단 유보",item.strength,item.pairs.length])],csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value??"").replaceAll('"','""')}"`).join(",")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),link=document.createElement("a");link.href=url;link.download=`${data.company.name}_기업분석.csv`;link.click();URL.revokeObjectURL(url);
+  const overview=decisionModel(data),rows=[["기업",data.company.name],["종목코드",data.company.stockCode],["업종",data.company.industry],["분석 목적",overview.purposeLabel],["연간 재무 기준",overview.basis],["최신 확정 실적",data.interim?.status==="ready"?`${data.interim.year}년 ${data.interim.reportLabel}`:"별도 확인 필요"],["생성 시각",data.generatedAt],[],["지표","최신값","3년 분류","업종 비교"],...data.metrics.map(item=>[item.label,item.display,item.state,item.peer]),[],["외부요인","상관계수","강도","공통 관측월"],...data.sensitivities.map(item=>[item.name,finite(item.coefficient)?item.coefficient.toFixed(3):"판단 유보",item.strength,item.pairs.length])],csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value??"").replaceAll('"','""')}"`).join(",")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),link=document.createElement("a");link.href=url;link.download=`${data.company.name}_기업분석.csv`;link.click();URL.revokeObjectURL(url);
 }
 
 function draw(history){

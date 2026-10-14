@@ -1,5 +1,5 @@
 import { CRITERION_GROUPS } from "./criterion-groups.js";
-import { assessCompany, assessmentThreshold, rankByQuality } from "./company-assessment.js";
+import { assessCriteria, rankByCriteria } from "./criteria-score.js";
 
 const state = {
   selected: JSON.parse(localStorage.getItem("compareCompanies") || "[]"),
@@ -17,7 +17,7 @@ const state = {
   movingAverages: JSON.parse(localStorage.getItem("movingAverages") || "[5,20,60,120]"),
   criteria: JSON.parse(localStorage.getItem("investmentCriteria") || '[{"metric":"operatingMargin","operator":">=","value":10},{"metric":"roe","operator":">=","value":10},{"metric":"debtRatio","operator":"<=","value":100},{"metric":"fcf","operator":">","value":0}]'),
   criterionGroup: localStorage.getItem("criterionGroup") || "growth",
-  comparisonOrder: "quality",
+  comparisonOrder: "criteria",
   chartSelectionMode: "automatic",
   manualChartCodes: [],
 };
@@ -107,7 +107,7 @@ const reportNames = { "11011": "4분기·연간 사업보고서", "11013": "1분
 const colors = ["#3182f6", "#f97316", "#6366f1", "#a855f7", "#14b8a6", "#ef4444", "#84a928", "#334155", "#d6a21e", "#8b6f5a"];
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-const financialUnsupportedMetrics = new Set(["revenue", "operatingMargin", "netMargin", "operatingCashFlow", "capex", "fcf", "fcfMargin", "fcfYield"]);
+const financialUnsupportedMetrics = new Set(["revenue", "revenueGrowth", "operatingProfitGrowth", "operatingMargin", "netMargin", "debtRatio", "operatingCashFlow", "capex", "fcf", "fcfMargin", "fcfYield"]);
 
 function money(value) {
   if (!Number.isFinite(value)) return "—";
@@ -198,21 +198,16 @@ function savePreferences() {
   localStorage.removeItem("visibleMetrics");
 }
 
-function criterionPass(company, criterion) {
-  const value = metricValue(company, criterion.metric);
-  const target = Number(criterion.value);
-  if (!Number.isFinite(value) || !Number.isFinite(target)) return false;
-  return ({ ">=": value >= target, "<=": value <= target, ">": value > target, "<": value < target, "=": value === target })[criterion.operator];
-}
-
 function criterionApplicable(company, criterion) {
   return !(company.isFinancial && financialUnsupportedMetrics.has(criterion.metric));
 }
 
+function criterionAssessment(company) {
+  return assessCriteria(company, state.criteria, metricValue, criterionApplicable);
+}
+
 function companyPassesCriteria(company) {
-  return state.criteria
-    .filter((criterion) => criterionApplicable(company, criterion))
-    .every((criterion) => criterionPass(company, criterion));
+  return criterionAssessment(company).passes;
 }
 
 function analysisCompanies() {
@@ -220,15 +215,11 @@ function analysisCompanies() {
   return $("#filter-passed")?.checked ? companies.filter(companyPassesCriteria) : companies;
 }
 
-function assessmentFor(company) {
-  return assessCompany(company, state.benchmarks[company.corpCode], state.data?.reportCode);
-}
-
 function orderedCompanies() {
   const companies = analysisCompanies();
-  if (state.comparisonOrder === "selected") return companies;
-  const assessments = Object.fromEntries(companies.map((company) => [company.corpCode, assessmentFor(company)]));
-  return rankByQuality(companies, assessments);
+  if (state.comparisonOrder === "selected" || !state.criteria.length) return companies;
+  const assessments = Object.fromEntries(companies.map((company) => [company.corpCode, criterionAssessment(company)]));
+  return rankByCriteria(companies, assessments);
 }
 
 function chartCompanies(limit = 5) {
@@ -242,7 +233,7 @@ function chartScopeLabel(count, limit) {
   const scope = $("#filter-passed").checked ? "조건 통과 기업" : "비교함 전체 기업";
   if (state.chartSelectionMode === "manual") return `${scope} ${count}개 중 직접 고른 기업 ${chartCompanies(limit).length}개 표시`;
   return count > limit
-    ? `${scope} ${count}개 중 ${state.comparisonOrder === "quality" ? "재무 예비점수" : "비교함 순서"} 앞 ${limit}개만 차트에 표시합니다. 전체 값은 위 표에서 확인하세요.`
+    ? `${scope} ${count}개 중 ${state.comparisonOrder === "criteria" && state.criteria.length ? "내 조건 적합도" : "비교함 순서"} 앞 ${limit}개만 차트에 표시합니다. 전체 값은 위 표에서 확인하세요.`
     : `${scope} ${count}개를 차트에 표시합니다.`;
 }
 
@@ -295,6 +286,7 @@ function renderCriterionCatalog() {
     const metric = button.dataset.criterionMetric;
     const existingIndex = state.criteria.findIndex((criterion) => criterion.metric === metric);
     if (existingIndex >= 0) {
+      $(".criterion-catalog").open = false;
       document.querySelector(`.criterion-row[data-index="${existingIndex}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
       return;
     }
@@ -302,6 +294,8 @@ function renderCriterionCatalog() {
     state.criteria.push({ metric, operator: guide.operator, value: guide.value });
     state.metric = metric;
     savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults();
+    $(".criterion-catalog").open = false;
+    document.querySelector(`.criterion-row[data-index="${state.criteria.length - 1}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
   }));
 }
 
@@ -309,11 +303,10 @@ function renderCriteria() {
   const options = Object.entries(metrics).map(([key, metric]) => `<option value="${key}">${metric.label} (${metric.unit})</option>`).join("");
   $("#criteria-list").innerHTML = state.criteria.map((criterion, index) => `
     <div class="criterion-row" data-index="${index}">
-      <select class="criterion-metric">${options}</select>
-      <select class="criterion-operator"><option>&gt;=</option><option>&lt;=</option><option>&gt;</option><option>&lt;</option><option>=</option></select>
+      <select class="criterion-metric" aria-label="비교 지표">${options}</select>
+      <select class="criterion-operator" aria-label="비교 방법"><option>&gt;=</option><option>&lt;=</option><option>&gt;</option><option>&lt;</option><option>=</option></select>
       <input class="criterion-value" type="number" step="any" value="${criterion.value}" aria-label="기준값" />
       <button class="criterion-remove" aria-label="조건 삭제">×</button>
-      <small class="criterion-inline-guide">${metricGuides[criterion.metric]?.text || metricDescriptions[criterion.metric] || "선택 지표의 정의를 확인하세요."}</small>
     </div>
   `).join("");
   document.querySelectorAll(".criterion-row").forEach((row) => {
@@ -328,7 +321,11 @@ function renderCriteria() {
   renderCriterionCatalog();
 }
 
-$("#add-criterion").addEventListener("click", () => { state.criteria.push({ metric: "operatingMargin", operator: ">=", value: 10 }); state.metric = "operatingMargin"; savePreferences(); invalidateScreening(); renderCriteria(); renderMetricButtons(); if (state.data) renderResults(); });
+$("#add-criterion").addEventListener("click", () => {
+  const catalog = $(".criterion-catalog");
+  catalog.open = true;
+  catalog.scrollIntoView({ block: "start", behavior: "smooth" });
+});
 $("#filter-passed").addEventListener("change", () => state.data && renderResults());
 
 async function loadDiscovery() {
@@ -369,7 +366,7 @@ function renderLeaderList() {
   $("#leader-list").innerHTML = items.length ? items.map((item, index) => {
     const selected = state.selected.some((company) => company.corpCode === item.corpCode);
     const detail = state.screeningDetails.get(item.corpCode);
-    const passLabel = state.screenedCandidates ? `<small class="screen-pass">조건 ${detail?.passCount ?? state.criteria.length}/${detail?.criterionCount ?? state.criteria.length} 통과</small>` : "";
+    const passLabel = state.screenedCandidates ? `<small class="screen-pass">${state.criteria.length ? `내 조건 ${detail?.passCount ?? 0}/${detail?.criterionCount ?? 0}개 충족` : "설정한 조건 없음"}</small>` : "";
     return `<div class="leader-item"><span class="leader-rank">${String(index + 1).padStart(2, "0")}</span><span class="leader-name">${item.name}<small>${item.industry} · ${item.stockCode}</small>${passLabel}</span><span class="leader-value">${money(item.marketCap)}<small class="subvalue">${percent(item.changeRate)}</small></span><button class="add-company" data-add-corp="${item.corpCode}" ${selected || state.selected.length >= 10 ? "disabled" : ""}>${selected ? "담김" : "+ 담기"}</button></div>`;
   }).join("") : `<p>${state.screenedCandidates ? "현재 조건을 모두 통과한 기업이 없습니다. 기준을 조정해 보세요." : "선택한 범위에 표시할 종목이 없습니다."}</p>`;
   document.querySelectorAll("[data-add-corp]").forEach((button) => button.addEventListener("click", () => {
@@ -396,10 +393,9 @@ async function screenDiscoveryCandidates() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "조건에 맞는 기업을 찾지 못했습니다.");
       payload.companies.forEach((company) => {
-        const applicable = state.criteria.filter((criterion) => criterionApplicable(company, criterion));
-        const passCount = applicable.filter((criterion) => criterionPass(company, criterion)).length;
-        state.screeningDetails.set(company.corpCode, { passCount, criterionCount: applicable.length });
-        if (passCount === applicable.length) state.screenedCandidates.add(company.corpCode);
+        const result = criterionAssessment(company);
+        state.screeningDetails.set(company.corpCode, { passCount: result.passed, criterionCount: result.applicable });
+        if (result.passes) state.screenedCandidates.add(company.corpCode);
       });
     }
     status.textContent = `${candidates.length}개 중 ${state.screenedCandidates.size}개가 모든 조건을 통과했습니다.`;
@@ -535,21 +531,24 @@ function signalClass(value) {
   return "neutral";
 }
 
-function assessmentValue(check) {
-  if (!check.available) return "자료 없음";
-  if (["netIncome", "equity", "fcf"].includes(check.key)) return money(check.value);
-  if (["interestCoverage", "per", "pbr"].includes(check.key)) return multiple(check.value);
-  return percent(check.value);
-}
-
 function renderComparisonAssessment(companies) {
+  const selectedCount = state.criteria.length;
   const cards = companies.map((company) => {
-    const assessment = assessmentFor(company), quality = assessment.quality, price = assessment.price;
-    const details = (title, result) => `<details><summary>${title} 근거 ${result.available}/${result.total}개</summary><ul>${result.checks.map((check) => `<li><span>${esc(check.label)} · ${esc(assessmentValue(check))}</span><b>${check.available ? (check.passed ? "충족" : "미달") : "자료 없음"}</b><small>기준 ${esc(assessmentThreshold(check))}</small></li>`).join("")}</ul></details>`;
-    return `<article class="comparison-assessment-card"><div><b>${esc(company.name)}</b><small>${esc(company.industry || "업종 확인 필요")}</small></div><strong>${Number.isFinite(quality.score) ? `${quality.score}점 · ${quality.grade}` : "재무 자료 부족"}</strong><span>상대 가격: ${Number.isFinite(price.score) ? `${price.score}점 · ${price.grade}` : price.grade}</span>${details("재무", quality)}${details("가격", price)}</article>`;
+    const result = criterionAssessment(company);
+    const status = !selectedCount ? "조건을 먼저 골라주세요" : !result.applicable ? "이 기업에 적용할 조건 없음" : `선택 조건 ${result.passed}/${selectedCount}개 충족`;
+    const exceptions = [result.missing ? `자료 없음 ${result.missing}개` : "", result.notApplicable ? `업종상 제외 ${result.notApplicable}개` : ""].filter(Boolean).join(" · ");
+    const checks = result.checks.map((check) => {
+      const metric = metrics[check.criterion.metric];
+      const actual = check.available ? metric?.format(check.value) || String(check.value) : check.applicable ? "자료 없음" : "업종상 적용 제외";
+      const target = `${check.criterion.operator} ${metric?.format(check.target) || check.target}`;
+      const verdict = !check.applicable ? "적용 제외" : !check.available ? "확인 불가" : check.passed ? "충족" : "미충족";
+      return `<li><span><b>${esc(metric?.label || check.criterion.metric)}</b><small>실제 ${esc(actual)} · 내 기준 ${esc(target)}</small></span><strong class="criterion-verdict ${check.passed ? "is-met" : ""}">${verdict}</strong></li>`;
+    }).join("");
+    const score = Number.isFinite(result.score) ? `${result.score}<small>점</small>` : selectedCount ? '<small class="assessment-unscored">점수 보류</small>' : "—";
+    return `<article class="comparison-assessment-card"><div class="assessment-company"><b>${esc(company.name)}</b><small>${esc(company.industry || "업종 확인 필요")}</small></div><strong class="assessment-score">${score}</strong><p class="assessment-status">${status}${exceptions ? ` <span>추가 확인: ${exceptions}</span>` : ""}</p><details><summary>적용된 조건과 실제 값 보기</summary><ul>${checks || "<li>선택한 조건이 없습니다.</li>"}</ul></details></article>`;
   });
   const remaining = cards.slice(5);
-  $("#comparison-assessment").innerHTML = `<div class="comparison-assessment-heading"><div><h4>기업별 재무·가격 판단 근거</h4><p>${state.data.year}년 ${reportNames[state.data.reportCode]} 기준입니다. 현재 ${state.comparisonOrder === "quality" ? "재무 예비점수 높은 순" : "비교함에 담은 순서"}으로 보며, 업종 간 직접 우열을 뜻하지 않습니다.</p></div></div><div class="comparison-assessment-list">${cards.slice(0, 5).join("") || "<p>표시할 기업이 없습니다.</p>"}</div>${remaining.length ? `<details class="comparison-assessment-more"><summary>나머지 ${remaining.length}개 기업 평가 보기</summary><div class="comparison-assessment-list">${remaining.join("")}</div></details>` : ""}<p class="assessment-footnote">공시값이 없는 항목은 점수로 추측하지 않습니다. 가격은 연간 실적과 같은 업종 주요 기업의 중위값을 비교한 참고 신호이며 투자 추천이 아닙니다. 최신 확정 분기 실적은 기업 분석 화면에서 별도로 확인하세요.</p>`;
+  $("#comparison-assessment").innerHTML = `<div class="comparison-assessment-heading"><div><h4>내 조건 적합도</h4><p>직접 선택한 ${selectedCount}개 조건만 점수에 반영합니다. 각 기업의 실제 값은 카드를 열어 확인하세요.</p></div></div><div class="comparison-assessment-list">${cards.slice(0, 5).join("") || "<p>표시할 기업이 없습니다.</p>"}</div>${remaining.length ? `<details class="comparison-assessment-more"><summary>나머지 ${remaining.length}개 기업의 조건 결과 보기</summary><div class="comparison-assessment-list">${remaining.join("")}</div></details>` : ""}<details class="assessment-method"><summary>점수 계산 기준</summary><p>선택한 조건을 같은 비중으로 계산합니다. 모든 조건에 해당 수치가 있을 때만 충족 수 ÷ 선택 조건 수 × 100으로 점수를 냅니다. 자료가 없거나 업종에 맞지 않는 조건이 있으면 점수를 보류하고 이유를 표시합니다. 이 점수는 투자 추천이나 업종 간 우열이 아닙니다.</p><p>재무값은 ${state.data.year}년 ${reportNames[state.data.reportCode]} 기준이며, 가격·주가 지표는 최신 수신일 기준입니다. 최신 분기 실적은 기업 분석에서 별도로 확인하세요.</p></details>`;
 }
 
 function renderChartChoices() {
@@ -589,7 +588,7 @@ function renderResults() {
   const ranked=[...displayCompanies].filter(company=>Number.isFinite(metricValue(company,state.metric))).sort((a,b)=>{
     const direction=state.metric==="debtRatio"?-1:1;return (metricValue(b,state.metric)-metricValue(a,state.metric))*direction;
   }).slice(0,3);
-  $("#decision-grid").innerHTML = `<div class="comparison-summary"><div><b>${metrics[state.metric]?.label||"선택 지표"} 상위 기업</b><span>복잡한 10개 카드 대신 핵심 순위만 먼저 보여드려요. 전체 수치는 바로 아래 표에서 비교하세요.</span></div><ol>${ranked.map((company,index)=>`<li><em>${index+1}</em><span><b>${company.name}</b><small>${company.industry||"업종 확인 중"}</small></span><strong>${metrics[state.metric]?.format(metricValue(company,state.metric))||"자료 없음"}</strong></li>`).join("")||"<li>비교할 수 있는 값이 없습니다.</li>"}</ol></div>`;
+  $("#decision-grid").innerHTML = `<div class="comparison-summary"><div><b>선택 지표: ${metrics[state.metric]?.label||"지표 없음"} 순</b><span>이 순위는 한 지표의 값만 비교합니다. 여러 조건을 합친 점수는 바로 아래에서 확인하세요.</span></div><ol>${ranked.map((company,index)=>`<li><em>${index+1}</em><span><b>${company.name}</b><small>${company.industry||"업종 확인 중"}</small></span><strong>${metrics[state.metric]?.format(metricValue(company,state.metric))||"자료 없음"}</strong></li>`).join("")||"<li>비교할 수 있는 값이 없습니다.</li>"}</ol></div>`;
   renderComparisonAssessment(displayCompanies);
   renderChartChoices();
 
@@ -841,7 +840,7 @@ document.querySelectorAll("[data-chart-mode]").forEach((button) => button.addEve
   state.chartMode = button.dataset.chartMode; state.hoverIndex = null; renderChart();
 }));
 $("#comparison-order").addEventListener("change", (event) => {
-  state.comparisonOrder = event.target.value === "selected" ? "selected" : "quality";
+  state.comparisonOrder = event.target.value === "selected" ? "selected" : "criteria";
   state.returnData = null;
   renderResults();
 });

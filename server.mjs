@@ -162,13 +162,19 @@ function selectAccount(rows, ids, names, statements = null, amountField = "thstr
     return number(String(preferred ?? "").trim() ? preferred : fallback);
   };
   for (const id of ids) {
-    const found = candidates.find((row) => row.account_id === id);
-    if (found) return amount(found);
+    for (const row of candidates) {
+      if (row.account_id !== id) continue;
+      const value = amount(row);
+      if (value !== null) return value;
+    }
   }
   for (const name of names) {
     const normalized = name.replaceAll(" ", "");
-    const found = candidates.find((row) => String(row.account_nm || "").replaceAll(" ", "") === normalized);
-    if (found) return amount(found);
+    for (const row of candidates) {
+      if (String(row.account_nm || "").replaceAll(" ", "") !== normalized) continue;
+      const value = amount(row);
+      if (value !== null) return value;
+    }
   }
   return null;
 }
@@ -817,32 +823,77 @@ function evaluate(financials, market, isFinancial = false) {
   };
 }
 
-async function buildCompany(company, years, reportCode = "11011") {
-  // 연간 사업보고서는 당기·전기·전전기 수치를 함께 제공합니다.
-  // 5개 연도를 각각 호출하지 않고 최신 연도와 3년 전 자료만 조회해 5개 연도를 복원합니다.
-  const statementYears = reportCode === "11011" && years.length >= 4
-    ? [...new Set([years.at(-1), years.at(-4)])]
+function hasCoreFinancialValue(period) {
+  return [period.revenue, period.operatingProfit, period.netIncome, period.assets, period.equity].some(Number.isFinite);
+}
+
+export async function loadFinancialPeriods(corpCode, years, reportCode = "11011", statementLoader = dartStatement) {
+  // 사업보고서에는 당기·전기·전전기 값이 있습니다. 5개년은 최신 연도와
+  // 2년 전 보고서의 비교표로 확인합니다. 오래된 연도의 직접 API 조회가
+  // 013이어도 2023년 보고서에서 2021·2022년을 복원할 수 있습니다.
+  const annual = reportCode === "11011";
+  const initialYears = annual && years.length === 5
+    ? [years.at(-1), years.at(-3)]
     : years;
-  const results = await Promise.allSettled(statementYears.map(async (year) => {
-    const rows = await dartStatement(company.corpCode, year, reportCode);
-    return { rows, summary: summarize(rows, year, reportCode) };
-  }));
-  const fulfilled = results.filter((item) => item.status === "fulfilled").map((item) => item.value);
-  const rawFinancials = fulfilled.map((item) => item.summary);
-  if (reportCode === "11011") {
-    const requested = new Set(years);
-    const present = new Set(rawFinancials.map((item) => item.year));
-    fulfilled.sort((a, b) => a.summary.year - b.summary.year).forEach(({ rows, summary }) => {
-      [[1, "frmtrm_amount"], [2, "bfefrmtrm_amount"]].forEach(([offset, field]) => {
-        const targetYear = summary.year - offset;
-        if (!requested.has(targetYear) || present.has(targetYear)) return;
-        const comparison = summarize(rows, targetYear, reportCode, field, summary.year);
-        const hasCoreValue = [comparison.revenue, comparison.operatingProfit, comparison.netIncome, comparison.assets, comparison.equity].some(Number.isFinite);
-        if (hasCoreValue) { rawFinancials.push(comparison); present.add(targetYear); }
-      });
-    });
+  const requested = new Set(years);
+  const fetched = new Map();
+  async function fetchYear(year) {
+    if (fetched.has(year)) return fetched.get(year);
+    try {
+      const result = { rows: await statementLoader(corpCode, year, reportCode) };
+      fetched.set(year, result);
+      return result;
+    } catch (error) {
+      const result = { error };
+      fetched.set(year, result);
+      return result;
+    }
   }
-  rawFinancials.sort((a, b) => a.year - b.year);
+  function periodsFromReports() {
+    const periods = new Map();
+    const reports = [...fetched.entries()]
+      .filter(([, result]) => Array.isArray(result.rows))
+      .sort(([a], [b]) => a - b);
+    for (const [year, { rows }] of reports) {
+      const period = summarize(rows, year, reportCode);
+      if (!annual || hasCoreFinancialValue(period)) periods.set(year, period);
+    }
+    if (annual) {
+      for (const [reportYear, { rows }] of reports) {
+        for (const [offset, field] of [[1, "frmtrm_amount"], [2, "bfefrmtrm_amount"]]) {
+          const year = reportYear - offset;
+          if (!requested.has(year) || periods.has(year)) continue;
+          const period = summarize(rows, year, reportCode, field, reportYear);
+          if (hasCoreFinancialValue(period)) periods.set(year, period);
+        }
+      }
+    }
+    return periods;
+  }
+  await Promise.all(initialYears.map(fetchYear));
+  let periods = periodsFromReports();
+  const hasNonMissingFailure = [...fetched.values()].some(({ error }) => error && !["013", "014"].includes(error.code));
+  // 비교표가 없는 회사·연도만 직접 조회합니다. 정상 회사는 2회 호출로 끝납니다.
+  if (!hasNonMissingFailure) {
+    for (const year of years) {
+      if (periods.has(year) || fetched.has(year)) continue;
+      const result = await fetchYear(year);
+      periods = periodsFromReports();
+      if (result.error && !["013", "014"].includes(result.error.code)) break;
+    }
+  }
+  const financials = years.filter((year) => periods.has(year)).map((year) => periods.get(year));
+  const warnings = [...fetched.entries()]
+    .filter(([year, result]) => requested.has(year) && !periods.has(year) && result.error)
+    .map(([, result]) => result.error.message);
+  if (hasNonMissingFailure && years.some((year) => !periods.has(year)) && !warnings.length) {
+    warnings.push("DART 재무자료 조회 중 오류가 발생했습니다. 잠시 후 다시 확인해 주세요.");
+  }
+  return { financials, warnings };
+}
+
+async function buildCompany(company, years, reportCode = "11011") {
+  const { financials: rawFinancials, warnings: financialWarnings } = await loadFinancialPeriods(company.corpCode, years, reportCode);
   const [marketResult, companyInfoResult, dividendResult] = await Promise.allSettled([
     marketHistory(company.stockCode),
     dartCompanyInfo(company.corpCode),
@@ -870,7 +921,7 @@ async function buildCompany(company, years, reportCode = "11011") {
     dividend,
     evaluation: evaluate(financials, market, isFinancial),
     warnings: [
-      ...results.filter((item) => item.status === "rejected").map((item) => item.reason.message),
+      ...financialWarnings,
       ...(marketError ? [marketError] : []),
     ],
   };
