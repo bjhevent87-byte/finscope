@@ -1,5 +1,6 @@
-import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=21";
+import{$,money,percent,setupSearch,setupMarketGuide,nav}from"./pages.js?v=22";
 import{hankyungReportSearchUrl,stockDisplayName}from"./stock-identity.js";
+import{assessCompany,assessmentThreshold}from"./company-assessment.js";
 $("#nav").innerHTML=nav("company");
 let selected=null,analysis=null;
 const finite=Number.isFinite;
@@ -64,6 +65,7 @@ async function runAnalysis(){
   $("#status").hidden=false;$("#status").textContent="DART 재무, KRX 주가, ECOS 환율·금리를 한 기준으로 맞추는 중입니다.";
   try{
     const year=new Date().getFullYear()-1,dates=range(),query=new URLSearchParams({corpCodes:selected.corpCode,year:String(year),reportCode:"11011",...dates});
+    const updatePromise=fetchJson(`/api/company-update?${new URLSearchParams({corpCode:selected.corpCode,afterYear:String(year-1)})}`).catch(error=>({status:"error",note:error.message}));
     const [compare,market,benchmark,fx,rate,research]=await Promise.all([
       fetchJson(`/api/compare?corpCodes=${selected.corpCode}&year=${year}&reportCode=11011`),
       fetchJson(`/api/backtest-data?${new URLSearchParams({corpCodes:selected.corpCode,...dates})}`),
@@ -75,7 +77,14 @@ async function runAnalysis(){
     const company=compare.companies?.[0];if(!company)throw new Error("기업 재무정보를 찾지 못했습니다.");
     company.name=stockDisplayName(company);
     const history=market.companies?.[0]?.history||company.market?.history||[];
-    analysis={...buildAnalysis({...company,longHistory:history},benchmark.benchmarks?.[0]||null,{fx,rate},market),research};renderAnalysis(analysis);
+    analysis={...buildAnalysis({...company,longHistory:history},benchmark.benchmarks?.[0]||null,{fx,rate},market),research,interim:{status:"loading"}};renderAnalysis(analysis);
+    const currentAnalysis=analysis;
+    updatePromise.then(update=>{
+      if(analysis!==currentAnalysis||selected?.corpCode!==company.corpCode)return;
+      analysis.interim=update.status==="ready"&&update.year<=Number(company.latest?.year||0)
+        ?{status:"none",note:"최근 연간 사업보고서 이후 새로 확정된 분기·반기 재무제표가 없습니다."}:update;
+      renderLatestUpdate(analysis);renderDecision(analysis);
+    });
   }catch(error){$("#status").hidden=false;$("#status").textContent=`분석을 완료하지 못했습니다: ${error.message}`}
 }
 
@@ -88,7 +97,7 @@ function buildAnalysis(company,benchmark,macro,marketPayload){
   ]:[
     metric("영업이익률",financials,"operatingMargin",false,1,benchmark,"operatingMargin"),metric("ROE",financials,"roe",false,1,benchmark,"roe"),metric("부채비율",financials,"debtRatio",true,5,benchmark,"debtRatio"),metric("이자보상배율",financials,"interestCoverage",false,.5,benchmark,"interestCoverage","multiple"),metric("FCF 마진",financials,"fcfMargin",false,1,benchmark,"fcfMargin"),
   ];
-  return{company,financials,latest,benchmark,macro,marketPayload,market,sensitivities,metrics,quality:qualityChecks(company,financials,macro,benchmark),generatedAt:new Date().toISOString()};
+  return{company,financials,latest,benchmark,macro,marketPayload,market,sensitivities,metrics,quality:qualityChecks(company,financials,macro,benchmark),assessment:assessCompany(company,benchmark,"11011"),generatedAt:new Date().toISOString()};
 }
 
 function metric(label,financials,key,lowerBetter=false,threshold=1,benchmark=null,benchmarkKey=null,format="percent"){
@@ -116,7 +125,7 @@ function qualityChecks(company,financials,macro,benchmark){
 }
 
 function renderAnalysis(data){
-  $("#status").hidden=true;$("#content").hidden=false;renderDecision(data);renderSummary(data);renderHealth(data);renderFactors(data);renderMarket(data);renderFinancials(data);renderResearch(data);
+  $("#status").hidden=true;$("#content").hidden=false;renderDecision(data);renderLatestUpdate(data);renderAssessment(data);renderSummary(data);renderHealth(data);renderFactors(data);renderMarket(data);renderFinancials(data);renderResearch(data);
   $("#open-lab").href=`/correlation.html?${new URLSearchParams({mode:"company-macro",company:data.company.corpCode,b:"usd-krw",autorun:"1"})}#analysis-settings`;
   $("#decision").scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -134,8 +143,36 @@ function decisionModel(data){
 }
 function renderDecision(data){
   const model=decisionModel(data),evidence=$("#decision-evidence");$("#decision-title").textContent=model.title;$("#decision-copy").textContent=model.copy;
+  if(data.interim?.status==="ready")$("#decision-copy").textContent+=` 이 판단은 ${data.latest.year}년 연간 재무 기준입니다. ${data.interim.year}년 ${data.interim.reportLabel}에 나온 실적은 바로 아래에서 별도로 비교하세요.`;
   const row=(text,index)=>`<div class="evidence-row"><b>근거 ${index+1}</b><span>${esc(text)}</span></div>`;
   evidence.innerHTML=model.evidence.length?`${row(model.evidence[0],0)}${model.evidence.length>1?`<details class="decision-more"><summary>나머지 근거 ${model.evidence.length-1}개 보기</summary>${model.evidence.slice(1).map((text,index)=>row(text,index+1)).join("")}</details>`:""}`:"<p>표시할 비교 근거가 없습니다. 아래 공시 자료를 확인해 주세요.</p>";
+}
+function renderLatestUpdate(data){
+  const target=$("#latest-disclosure-content"),update=data.interim;
+  if(!update||update.status==="loading"){target.innerHTML='<p class="latest-status">최신 분기·반기보고서를 확인하고 있습니다. 연간 분석은 먼저 살펴볼 수 있어요.</p>';return}
+  if(update.status!=="ready"){target.innerHTML=`<p class="latest-status">${esc(update.note||"확정된 최신 분기·반기보고서를 확인하지 못했습니다.")} 아래 연간 실적은 계속 확인할 수 있어요.</p>`;return}
+  const samePeriod=update.prior?`${update.year-1}년 ${update.reportLabel}`:"전년 같은 기간 자료 없음";
+  const items=[["매출",update.current?.revenue,update.prior?.revenue],["영업이익",update.current?.operatingProfit,update.prior?.operatingProfit],["순이익",update.current?.netIncome,update.prior?.netIncome]];
+  const cards=items.filter(([,value])=>finite(value)).map(([label,value,prior])=>{
+    const change=finite(prior)&&prior>0?growth(value,prior):null;
+    return `<article><span>${esc(label)}</span><strong>${esc(money(value))}</strong><small>${finite(change)?`전년 같은 기간 대비 ${esc(signedPercent(change))}`:"비교 가능한 전년 수치 없음"}</small></article>`;
+  }).join("");
+  const source=update.source?.url&&/^https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?rcpNo=\d{14}$/.test(update.source.url)
+    ?`<a href="${update.source.url}" target="_blank" rel="noopener">${update.year}년 ${esc(update.reportLabel)} DART 원문 ↗</a>`:"";
+  const preliminary=update.preliminary?.url&&/^https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?rcpNo=\d{14}$/.test(update.preliminary.url)
+    ?`<p class="latest-preliminary">이후 발표된 잠정실적이 있습니다. 확정 재무제표 숫자와 합치지 않았습니다. <a href="${update.preliminary.url}" target="_blank" rel="noopener">잠정실적 공시 확인 ↗</a></p>`:"";
+  target.innerHTML=`<div class="latest-period"><b>${update.year}년 ${esc(update.reportLabel)}</b><span>확정 공시 · ${esc(update.current?.statementBasis||"기준 확인 필요")} · ${samePeriod} 비교</span></div><div class="latest-grid">${cards||'<p>표시 가능한 핵심 손익 계정이 없습니다.</p>'}</div><p class="latest-explainer">${esc(update.comparisonNote)} 연간 추이와 분기 누적 수치를 한 그래프에 섞지 않습니다.</p><div class="latest-links">${source}<a href="/filings.html?corpCode=${encodeURIComponent(data.company.corpCode)}&name=${encodeURIComponent(data.company.name)}&stockCode=${encodeURIComponent(data.company.stockCode)}">다른 공시 보기 →</a></div>${preliminary}`;
+}
+function assessmentValue(check){
+  if(!check.available)return"자료 없음";
+  if(["netIncome","equity","fcf"].includes(check.key))return money(check.value);
+  if(check.key==="interestCoverage"||check.key==="per"||check.key==="pbr")return multiple(check.value);
+  return percent(check.value);
+}
+function renderAssessment(data){
+  const assessment=data.assessment;
+  const block=(title,result,note)=>`<article class="assessment-card"><div class="assessment-head"><span>${title}</span><strong>${finite(result.score)?`${result.score}점 · ${result.grade}`:result.grade}</strong></div><p>${esc(note)}</p><details><summary>평가 근거 ${result.available}/${result.total}개 확인하기</summary><ul>${result.checks.map(check=>`<li><span>${esc(check.label)} · ${esc(assessmentValue(check))}</span><b class="${check.available?(check.passed?"assessment-good":"assessment-caution"):""}">${check.available?(check.passed?"기준 충족":"기준 미달"):"자료 없음"}</b><small>기준 ${esc(assessmentThreshold(check))}</small></li>`).join("")}</ul></details></article>`;
+  $("#company-assessment-content").innerHTML=`<div class="assessment-grid">${block("재무 기초체력 · 예비점수",assessment.quality,assessment.qualityNote)}${block("같은 업종 내 상대 가격",assessment.price,assessment.priceNote)}</div><p class="assessment-footnote">점수 기준은 ${esc(data.latest.year||"확인 불가")}년 연간 실적입니다. 위의 최신 분기·반기 실적은 아직 이 점수에 더하지 않았습니다. 자료가 부족하면 점수를 내지 않으며, 이 평가는 매수·매도 추천이 아닙니다.</p>`;
 }
 function renderSummary(data){
   const f=data.latest,basis=f.year?`${f.year}년 사업보고서 · ${f.statementBasis||"기준 확인 필요"}`:"선택 기간 공시 없음";
@@ -158,7 +195,7 @@ function renderHealth(data){
   const basis=[...new Set(data.financials.map(item=>item.statementBasis).filter(Boolean))];$("#financial-basis").textContent=basis.length?`DART ${basis.join("·")} 기준`:"재무제표 기준 확인 필요";
   $("#health-cards").innerHTML=data.metrics.map(item=>`<article class="health-card"><header><h3>${esc(item.label)}</h3><span class="trend-chip ${item.tone}">${item.state}</span></header><div class="health-value">${esc(item.display)}</div><details class="health-context"><summary>업종 비교·3년 변화 보기</summary><p>${esc(item.peer)}${finite(item.change)?`<br>3년 변화 ${item.change>=0?"+":""}${item.format==="multiple"?item.change.toFixed(1)+"배":item.format==="money"?money(item.change):item.change.toFixed(1)+"%p"}`:""}</p></details></article>`).join("");
   const revGrowth=growth(data.financials.at(-1)?.revenue,data.financials.at(-2)?.revenue),opGrowth=growth(data.financials.at(-1)?.operatingProfit,data.financials.at(-2)?.operatingProfit),bullets=[];if(finite(revGrowth))bullets.push(`매출은 전년보다 ${signedPercent(revGrowth)} 변했습니다.`);if(finite(opGrowth))bullets.push(`영업이익은 전년보다 ${signedPercent(opGrowth)} 변했습니다.`);const worsening=data.metrics.filter(item=>item.state==="악화").map(item=>item.label);bullets.push(worsening.length?`${worsening.join("·")} 추세는 악화로 분류됐습니다.`:"최근 3년 지표에서 뚜렷한 동시 악화는 확인되지 않았습니다.");if(data.company.isFinancial)bullets.push("금융업은 BIS비율·NIM·연체율 등 전용 건전성 지표를 공시 원문에서 추가 확인해야 합니다.");
-  $("#performance-insight").innerHTML=`<h3>실적에서 눈여겨볼 점</h3><p>올해 실적뿐 아니라 지난 3년의 변화와 실제 현금흐름도 살펴보세요.</p><ul class="insight-list">${bullets.map(text=>`<li><b>•</b><span>${esc(text)}</span></li>`).join("")}</ul>`;
+  $("#performance-insight").innerHTML=`<h3>실적에서 눈여겨볼 점</h3><p>이 영역은 연간 실적 기준입니다. 위의 최신 분기·반기 실적과 함께 살펴보세요.</p><ul class="insight-list">${bullets.map(text=>`<li><b>•</b><span>${esc(text)}</span></li>`).join("")}</ul>`;
   $("#data-quality").innerHTML=`<h3>비교하기 전에 확인한 자료</h3><ul class="quality-list">${data.quality.map(item=>`<li class="${item.ok?"ok":"warn"}"><b>${item.ok?"확인":"주의"}</b><span>${esc(item.text)}</span></li>`).join("")}</ul>`;
 }
 const growth=(current,prior)=>finite(current)&&finite(prior)&&prior!==0?(current/prior-1)*100:null;

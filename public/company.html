@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="workspace-refresh.css?v=2">
     <link rel="stylesheet" href="workspace-unified.css?v=7">
     <link rel="stylesheet" href="company.css?v=4">
+    <link rel="stylesheet" href="assessment.css?v=1">
     <script defer src="/pwa.js?v=7"></script>
   </head>
   <body class="workspace-navigation">
@@ -27,7 +28,7 @@
         <p class="hero-copy">기업을 고르면 최근 실적·현금흐름·주가를 같은 업종과 함께 살펴볼 수 있어요.</p>
         <details class="company-hero-more">
           <summary>어떤 자료로 분석하나요? <span>기준·출처 보기</span></summary>
-          <p>DART 사업보고서의 재무 숫자, KRX 주가, ECOS 환율·금리를 사용합니다. 재무제표의 연도와 연결·별도 기준을 함께 확인해 주세요. 빠진 값은 0으로 채우지 않아요.</p>
+          <p>DART 연간·분기·반기보고서의 재무 숫자, KRX 주가, ECOS 환율·금리를 사용합니다. 재무제표의 기간과 연결·별도 기준을 함께 확인해 주세요. 빠진 값은 0으로 채우지 않아요.</p>
         </details>
         <div class="company-start" id="company-analysis">
           <div class="company-start-heading"><strong>어떤 기업을 살펴볼까요?</strong><span>기업 선택 → 목적 선택 → 분석</span></div>
@@ -93,6 +94,16 @@
             <div class="decision-evidence" id="decision-evidence"></div>
           </section>
 
+          <section class="analysis-section latest-disclosure" id="latest-disclosure">
+            <div class="section-row"><div><p class="eyebrow">LATEST CONFIRMED FILING</p><h2>가장 최근 확정 실적</h2><p class="section-copy">지난해 연간 실적과 별도로, 발표된 최신 분기·반기보고서를 같은 기간의 전년 자료와 비교합니다.</p></div></div>
+            <div id="latest-disclosure-content" aria-live="polite">최신 보고서를 확인하고 있습니다.</div>
+          </section>
+
+          <section class="analysis-section company-assessment" id="company-assessment">
+            <div class="section-row"><div><p class="eyebrow">EVIDENCE CHECK</p><h2>기업의 재무 상태와 현재 가격을 따로 보기</h2><p class="section-copy">공시 재무와 같은 업종의 가격 자료를 각각 확인합니다. 두 결과를 합쳐 투자 추천 순위를 만들지 않습니다.</p></div></div>
+            <div id="company-assessment-content"></div>
+          </section>
+
           <section id="executive-summary">
             <div class="section-row">
               <div><p class="eyebrow">EXECUTIVE SNAPSHOT</p><h2>현재 상태 한눈에 보기</h2></div>
@@ -104,7 +115,7 @@
 
           <section class="analysis-section" id="financial-health">
             <div class="section-row">
-              <div><p class="eyebrow">FINANCIAL HEALTH</p><h2>재무 상태는 3년 동안 어떻게 달라졌나요?</h2><p class="section-copy">올해 숫자 하나보다 3년 흐름과 같은 업종 기업과의 차이를 함께 봅니다.</p></div>
+              <div><p class="eyebrow">FINANCIAL HEALTH</p><h2>재무 상태는 3년 동안 어떻게 달라졌나요?</h2><p class="section-copy">최신 분기·반기 실적은 위에서 확인하고, 여기서는 연간 3년 흐름과 같은 업종 기업과의 차이를 봅니다.</p></div>
               <span class="tag" id="financial-basis">DART 기준 확인 중</span>
             </div>
             <div class="health-grid" id="health-cards"></div>
@@ -156,6 +167,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="company.js?v=17"></script>
+    <script type="module" src="company.js?v=18"></script>
   </body>
 </html>

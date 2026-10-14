@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { createMacroService, correlationInterpretation, macroSeriesCsv } from "./macro-data.mjs";
 import { handleAiGuide, spendAccess, aiGuideStatus } from "./ai-guide-api.mjs";
 import { buildTrendEvidence, runCompanyAgent } from "./company-agent.mjs";
+import { filingSource, latestFiledInterim } from "./financial-update.mjs";
 import { stockDisplayName } from "./public/stock-identity.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -219,7 +220,11 @@ async function dartStatement(corpCode, year, reportCode = "11011") {
       payload = fallback;
     }
   }
-  if (payload.status !== "000") throw new Error(`DART ${year}: ${payload.message || payload.status}`);
+  if (payload.status !== "000") {
+    const error = new Error(`DART ${year}: ${payload.message || payload.status}`);
+    error.code = payload.status;
+    throw error;
+  }
   const statementBasis = rows.find((row) => ["CFS", "OFS"].includes(row.fs_div))?.fs_div || params.get("fs_div") || null;
   rows = rows.map((row) => ({ ...row, __statementBasis: statementBasis }));
   cache.set(key, rows);
@@ -871,6 +876,42 @@ async function buildCompany(company, years, reportCode = "11011") {
   };
 }
 
+async function companyUpdate(company, afterYear) {
+  const today = kstDate();
+  const currentYear = Number(today.slice(0, 4));
+  const baseYear = Math.max(currentYear - 2, Math.min(Math.trunc(Number(afterYear)) || currentYear - 1, currentYear - 1));
+  const cacheKey = `company-update:${company.corpCode}:${currentYear}:${baseYear}`;
+  if (cache.has(cacheKey)) return cache.get(cacheKey);
+  const report = await latestFiledInterim(baseYear, currentYear,
+    (year, reportCode) => dartStatement(company.corpCode, year, reportCode));
+  if (!report) {
+    const result = { status: "none", afterYear: baseYear, note: "연간 보고서 이후 발표된 분기·반기 재무제표가 없습니다." };
+    cache.set(cacheKey, result, 10 * 60_000);
+    return result;
+  }
+  const info = await dartCompanyInfo(company.corpCode).catch(() => ({}));
+  const industryCode = info.induty_code || "";
+  const current = normalizeForIndustry(summarize(report.currentRows, report.year, report.reportCode), industryCode);
+  const prior = report.priorRows?.length
+    ? normalizeForIndustry(summarize(report.priorRows, report.year - 1, report.reportCode), industryCode)
+    : null;
+  const source = filingSource(report.currentRows);
+  const priorSource = filingSource(report.priorRows);
+  const comparable = Boolean(prior && current.statementBasis && current.statementBasis === prior.statementBasis);
+  const filings = await dartFilings(company.corpCode, source?.receiptDate || `${report.year}0101`, today).catch(() => []);
+  const preliminary = filings.find((item) => /잠정.*실적|실적.*잠정/.test(item.reportName)
+    && (!source?.receiptDate || item.receiptDate > source.receiptDate)) || null;
+  const result = {
+    status: "ready", year: report.year, reportCode: report.reportCode, reportLabel: report.reportLabel,
+    current, prior: comparable ? prior : null, source, priorSource: comparable ? priorSource : null,
+    comparisonNote: comparable ? "같은 종류의 전년 보고서·같은 재무제표 기준으로 비교했습니다. 손익과 현금흐름은 해당 시점까지의 누적 수치입니다."
+      : "같은 기간·같은 재무제표 기준의 전년 수치가 없어 증감률은 표시하지 않습니다.",
+    preliminary: preliminary && { title: preliminary.reportName, receiptDate: preliminary.receiptDate, url: preliminary.url },
+  };
+  cache.set(cacheKey, result, 30 * 60_000);
+  return result;
+}
+
 async function dartFilings(corpCode, beginDate, endDate, type = "", detailType = "", finalOnly = false) {
   if (!DART_KEY) throw new Error("OPEN_DART_API_KEY가 설정되지 않았습니다.");
   const params = new URLSearchParams({
@@ -1027,7 +1068,12 @@ async function buildBenchmarks(selected, year, reportCode, beginDate = "", endDa
         let financial = null, history = [];
         try { financial = normalizeForIndustry(summarize(await dartStatement(peer.corpCode, year, reportCode), year, reportCode), peer.industryCode); } catch {}
         try { history = (await marketHistory(peer.stockCode, beginDate, endDate)).map((row) => ({ date: row.basDt, close: number(row.clpr) })).filter((row) => Number.isFinite(row.close)); } catch {}
-        return { name: peer.name, corpCode: peer.corpCode, financial, history };
+        const valuation = financial && Number.isFinite(peer.marketCap) ? {
+          per: ratio(peer.marketCap, financial.netIncome, 1),
+          pbr: ratio(peer.marketCap, financial.equity, 1),
+          fcfYield: ratio(financial.fcf, peer.marketCap),
+        } : {};
+        return { name: peer.name, corpCode: peer.corpCode, financial, valuation, history };
       });
       const financials = results.map((item) => item.financial).filter(Boolean);
       const histories = results.map((item) => item.history).filter((history) => history.length > 1);
@@ -1041,6 +1087,7 @@ async function buildBenchmarks(selected, year, reportCode, beginDate = "", endDa
       }) : [];
       industryCache.set(groupKey, {
         peerCount: financials.length, peers: peers.map((peer) => peer.name), returnHistory: peerReturnHistory,
+        basisDate: marketCache.get(company.market).basisDate,
         metricProfile: isFinancial ? "financial" : "general",
         operatingMargin: isFinancial ? null : median(financials.map((item) => item.operatingMargin)),
         roe: median(financials.map((item) => item.roe)),
@@ -1053,6 +1100,9 @@ async function buildBenchmarks(selected, year, reportCode, beginDate = "", endDa
           debtRatio: isFinancial ? [] : financials.map((item) => item.debtRatio).filter(Number.isFinite),
           interestCoverage: isFinancial ? [] : financials.map((item) => item.interestCoverage).filter(Number.isFinite),
           fcfMargin: isFinancial ? [] : financials.map((item) => item.fcfMargin).filter(Number.isFinite),
+          per: results.map((item) => item.valuation.per).filter((value) => Number.isFinite(value) && value > 0),
+          pbr: results.map((item) => item.valuation.pbr).filter((value) => Number.isFinite(value) && value > 0),
+          fcfYield: isFinancial ? [] : results.map((item) => item.valuation.fcfYield).filter(Number.isFinite),
         },
       });
     }
@@ -1085,6 +1135,14 @@ async function api(req, res, url) {
     const q = (url.searchParams.get("q") || "").trim().toLowerCase();
     if (q.length < 1) return json(res, 200, []);
     return json(res, 200, await searchCompanies(q));
+  }
+  if (url.pathname === "/api/company-update") {
+    const corpCode = url.searchParams.get("corpCode") || "";
+    if (!/^\d{8}$/.test(corpCode)) return json(res, 400, { error: "기업 고유번호를 확인해 주세요." });
+    if (!DART_KEY) return json(res, 503, { error: "DART 연결이 준비되지 않았습니다." });
+    const company = (await loadCompanies()).find((item) => item.corpCode === corpCode);
+    if (!company) return json(res, 404, { error: "기업을 찾지 못했습니다." });
+    return json(res, 200, await companyUpdate(company, url.searchParams.get("afterYear")));
   }
   if (url.pathname === "/api/assets") {
     const q = (url.searchParams.get("q") || "").trim().toLowerCase();

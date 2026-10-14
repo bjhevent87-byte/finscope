@@ -1,4 +1,5 @@
 import { CRITERION_GROUPS } from "./criterion-groups.js";
+import { assessCompany, assessmentThreshold, rankByQuality } from "./company-assessment.js";
 
 const state = {
   selected: JSON.parse(localStorage.getItem("compareCompanies") || "[]"),
@@ -16,6 +17,9 @@ const state = {
   movingAverages: JSON.parse(localStorage.getItem("movingAverages") || "[5,20,60,120]"),
   criteria: JSON.parse(localStorage.getItem("investmentCriteria") || '[{"metric":"operatingMargin","operator":">=","value":10},{"metric":"roe","operator":">=","value":10},{"metric":"debtRatio","operator":"<=","value":100},{"metric":"fcf","operator":">","value":0}]'),
   criterionGroup: localStorage.getItem("criterionGroup") || "growth",
+  comparisonOrder: "quality",
+  chartSelectionMode: "automatic",
+  manualChartCodes: [],
 };
 
 const metrics = {
@@ -102,6 +106,7 @@ const reportNames = { "11011": "4분기·연간 사업보고서", "11013": "1분
 
 const colors = ["#3182f6", "#f97316", "#6366f1", "#a855f7", "#14b8a6", "#ef4444", "#84a928", "#334155", "#d6a21e", "#8b6f5a"];
 const $ = (selector) => document.querySelector(selector);
+const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const financialUnsupportedMetrics = new Set(["revenue", "operatingMargin", "netMargin", "operatingCashFlow", "capex", "fcf", "fcfMargin", "fcfYield"]);
 
 function money(value) {
@@ -215,10 +220,29 @@ function analysisCompanies() {
   return $("#filter-passed")?.checked ? companies.filter(companyPassesCriteria) : companies;
 }
 
+function assessmentFor(company) {
+  return assessCompany(company, state.benchmarks[company.corpCode], state.data?.reportCode);
+}
+
+function orderedCompanies() {
+  const companies = analysisCompanies();
+  if (state.comparisonOrder === "selected") return companies;
+  const assessments = Object.fromEntries(companies.map((company) => [company.corpCode, assessmentFor(company)]));
+  return rankByQuality(companies, assessments);
+}
+
+function chartCompanies(limit = 5) {
+  const companies = orderedCompanies();
+  if (state.chartSelectionMode !== "manual") return companies.slice(0, limit);
+  return state.manualChartCodes.map((code) => companies.find((company) => company.corpCode === code))
+    .filter(Boolean).slice(0, limit);
+}
+
 function chartScopeLabel(count, limit) {
   const scope = $("#filter-passed").checked ? "조건 통과 기업" : "비교함 전체 기업";
+  if (state.chartSelectionMode === "manual") return `${scope} ${count}개 중 직접 고른 기업 ${chartCompanies(limit).length}개 표시`;
   return count > limit
-    ? `${scope} ${count}개 중 비교함 순서 앞 ${limit}개만 차트에 표시합니다. 전체 값은 위 표에서 확인하세요.`
+    ? `${scope} ${count}개 중 ${state.comparisonOrder === "quality" ? "재무 예비점수" : "비교함 순서"} 앞 ${limit}개만 차트에 표시합니다. 전체 값은 위 표에서 확인하세요.`
     : `${scope} ${count}개를 차트에 표시합니다.`;
 }
 
@@ -491,7 +515,7 @@ function chartDateRange(period) {
 }
 
 async function loadLongMarket(period, target = "return") {
-  const companies = target === "return" ? analysisCompanies().slice(0, 4) : analysisCompanies();
+  const companies = target === "return" ? chartCompanies(4) : orderedCompanies();
   if (!companies.length) return null;
   const range = chartDateRange(period), codes = companies.map((item) => item.corpCode).join(",");
   const key = `${codes}:${range.beginDate}:${range.endDate}`;
@@ -511,9 +535,46 @@ function signalClass(value) {
   return "neutral";
 }
 
+function assessmentValue(check) {
+  if (!check.available) return "자료 없음";
+  if (["netIncome", "equity", "fcf"].includes(check.key)) return money(check.value);
+  if (["interestCoverage", "per", "pbr"].includes(check.key)) return multiple(check.value);
+  return percent(check.value);
+}
+
+function renderComparisonAssessment(companies) {
+  const cards = companies.map((company) => {
+    const assessment = assessmentFor(company), quality = assessment.quality, price = assessment.price;
+    const details = (title, result) => `<details><summary>${title} 근거 ${result.available}/${result.total}개</summary><ul>${result.checks.map((check) => `<li><span>${esc(check.label)} · ${esc(assessmentValue(check))}</span><b>${check.available ? (check.passed ? "충족" : "미달") : "자료 없음"}</b><small>기준 ${esc(assessmentThreshold(check))}</small></li>`).join("")}</ul></details>`;
+    return `<article class="comparison-assessment-card"><div><b>${esc(company.name)}</b><small>${esc(company.industry || "업종 확인 필요")}</small></div><strong>${Number.isFinite(quality.score) ? `${quality.score}점 · ${quality.grade}` : "재무 자료 부족"}</strong><span>상대 가격: ${Number.isFinite(price.score) ? `${price.score}점 · ${price.grade}` : price.grade}</span>${details("재무", quality)}${details("가격", price)}</article>`;
+  });
+  const remaining = cards.slice(5);
+  $("#comparison-assessment").innerHTML = `<div class="comparison-assessment-heading"><div><h4>기업별 재무·가격 판단 근거</h4><p>${state.data.year}년 ${reportNames[state.data.reportCode]} 기준입니다. 현재 ${state.comparisonOrder === "quality" ? "재무 예비점수 높은 순" : "비교함에 담은 순서"}으로 보며, 업종 간 직접 우열을 뜻하지 않습니다.</p></div></div><div class="comparison-assessment-list">${cards.slice(0, 5).join("") || "<p>표시할 기업이 없습니다.</p>"}</div>${remaining.length ? `<details class="comparison-assessment-more"><summary>나머지 ${remaining.length}개 기업 평가 보기</summary><div class="comparison-assessment-list">${remaining.join("")}</div></details>` : ""}<p class="assessment-footnote">공시값이 없는 항목은 점수로 추측하지 않습니다. 가격은 연간 실적과 같은 업종 주요 기업의 중위값을 비교한 참고 신호이며 투자 추천이 아닙니다. 최신 확정 분기 실적은 기업 분석 화면에서 별도로 확인하세요.</p>`;
+}
+
+function renderChartChoices() {
+  const container = $("#chart-company-options");
+  container.hidden = state.chartSelectionMode !== "manual";
+  if (container.hidden) return;
+  const companies = orderedCompanies();
+  const visibleCodes = new Set(companies.map((company) => company.corpCode));
+  state.manualChartCodes = state.manualChartCodes.filter((code) => visibleCodes.has(code));
+  container.innerHTML = companies.map((company) => {
+    const selected = state.manualChartCodes.includes(company.corpCode);
+    return `<label><input type="checkbox" value="${company.corpCode}" ${selected ? "checked" : ""} ${!selected && state.manualChartCodes.length >= 5 ? "disabled" : ""}><span>${esc(company.name)}</span></label>`;
+  }).join("");
+  container.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => {
+    state.manualChartCodes = input.checked
+      ? [...state.manualChartCodes, input.value].slice(0, 5)
+      : state.manualChartCodes.filter((code) => code !== input.value);
+    state.returnData = null;
+    renderChartChoices(); renderChart(); renderReturnChart();
+  }));
+}
+
 function renderResults() {
   const { companies, year, reportCode } = state.data;
-  const displayCompanies = analysisCompanies();
+  const displayCompanies = orderedCompanies();
   const passedCount = companies.filter(companyPassesCriteria).length;
   const passedOnly = $("#filter-passed").checked;
   $("#filter-count").textContent = `통과 ${passedCount} / 비교함 ${companies.length}`;
@@ -529,6 +590,8 @@ function renderResults() {
     const direction=state.metric==="debtRatio"?-1:1;return (metricValue(b,state.metric)-metricValue(a,state.metric))*direction;
   }).slice(0,3);
   $("#decision-grid").innerHTML = `<div class="comparison-summary"><div><b>${metrics[state.metric]?.label||"선택 지표"} 상위 기업</b><span>복잡한 10개 카드 대신 핵심 순위만 먼저 보여드려요. 전체 수치는 바로 아래 표에서 비교하세요.</span></div><ol>${ranked.map((company,index)=>`<li><em>${index+1}</em><span><b>${company.name}</b><small>${company.industry||"업종 확인 중"}</small></span><strong>${metrics[state.metric]?.format(metricValue(company,state.metric))||"자료 없음"}</strong></li>`).join("")||"<li>비교할 수 있는 값이 없습니다.</li>"}</ol></div>`;
+  renderComparisonAssessment(displayCompanies);
+  renderChartChoices();
 
   $("#table-head").innerHTML = `<th>기업</th>${displayMetrics.map((key) => `<th><span class="metric-help" title="${metricDescriptions[key] || ""}" data-tooltip="${metricDescriptions[key] || ""}">${metrics[key]?.label || key} ⓘ</span></th>`).join("")}`;
   $("#table-body").innerHTML = displayCompanies.length ? displayCompanies.map((company) => {
@@ -574,8 +637,8 @@ function renderChart(hoverIndex = null) {
   const ctx = canvas.getContext("2d"); ctx.scale(dpr, dpr);
   const width = rect.width, height = rect.height, pad = { left: 58, right: 22, top: 20, bottom: 38 };
   const metric = metrics[state.metric];
-  const allCompanies = analysisCompanies();
-  const companies = allCompanies.slice(0, 5);
+  const allCompanies = orderedCompanies();
+  const companies = chartCompanies(5);
   if (!metric) {
     ctx.fillStyle = "#66716b";
     ctx.font = "13px Noto Sans KR";
@@ -637,8 +700,8 @@ function renderSnapshotChart(metric, hoverIndex = null) {
   canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
   const ctx = canvas.getContext("2d"); ctx.scale(dpr, dpr);
   const width = rect.width, height = rect.height, pad = { left: 72, right: 24, top: 28, bottom: 78 };
-  const allCompanies = analysisCompanies();
-  const companies = allCompanies.slice(0, 5);
+  const allCompanies = orderedCompanies();
+  const companies = chartCompanies(5);
   const values = companies.map((company) => metricValue(company, state.metric));
   const finite = values.filter(Number.isFinite);
   $(".chart-label").textContent = "CURRENT SNAPSHOT";
@@ -727,8 +790,8 @@ function renderPriceChart(hoverIndex = null) {
 async function renderReturnChart(hoverIndex = null) {
   const canvas = $("#return-chart");
   if (!canvas || !state.data?.companies?.length) return;
-  const allDisplayCompanies = analysisCompanies();
-  const displayCompanies = allDisplayCompanies.slice(0, 4);
+  const allDisplayCompanies = orderedCompanies();
+  const displayCompanies = chartCompanies(4);
   if (!displayCompanies.length) {
     const rect = canvas.getBoundingClientRect(), ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, rect.width, rect.height); ctx.fillStyle = "#66716b"; ctx.font = "14px Noto Sans KR"; ctx.fillText("현재 조건을 통과한 기업이 없습니다.", 24, 42);
@@ -777,6 +840,19 @@ async function renderReturnChart(hoverIndex = null) {
 document.querySelectorAll("[data-chart-mode]").forEach((button) => button.addEventListener("click", () => {
   state.chartMode = button.dataset.chartMode; state.hoverIndex = null; renderChart();
 }));
+$("#comparison-order").addEventListener("change", (event) => {
+  state.comparisonOrder = event.target.value === "selected" ? "selected" : "quality";
+  state.returnData = null;
+  renderResults();
+});
+$("#chart-selection-mode").addEventListener("change", (event) => {
+  state.chartSelectionMode = event.target.value === "manual" ? "manual" : "automatic";
+  if (state.chartSelectionMode === "manual" && !state.manualChartCodes.length) {
+    state.manualChartCodes = orderedCompanies().slice(0, 5).map((company) => company.corpCode);
+  }
+  state.returnData = null;
+  renderChartChoices(); renderChart(); renderReturnChart();
+});
 $("#price-company-select").addEventListener("change", () => { state.hoverIndex = null; renderChart(); });
 $("#price-period").addEventListener("change", () => { state.hoverIndex = null; renderChart(); });
 $("#financial-scale").addEventListener("change", () => { state.hoverIndex = null; renderChart(); });
