@@ -12,7 +12,7 @@ const average=values=>{const valid=values.filter(finite);return valid.length?val
 const std=values=>{const mean=average(values);return finite(mean)&&values.length>1?Math.sqrt(values.reduce((sum,value)=>sum+(value-mean)**2,0)/(values.length-1)):null};
 const fetchJson=async url=>{const response=await fetch(url),payload=await response.json().catch(()=>({}));if(!response.ok||payload.error)throw new Error(payload.error||`데이터 요청 실패 (${response.status})`);return payload};
 const range=()=>{const end=new Date(),start=new Date(end),value=$("#price-period").value;if(value==="max")start.setFullYear(2020,0,1);else start.setFullYear(start.getFullYear()-Number(value));const compact=date=>date.toISOString().slice(0,10).replaceAll("-","");return{beginDate:compact(start),endDate:compact(end)}};
-const selectCompany=company=>{selected=company;$("#search").value=company.name;localStorage.setItem("activeCompany",JSON.stringify(company))};
+const selectCompany=company=>{selected=company;$("#search").value=company.name;$("#company-agent-selected").textContent=`선택한 기업: ${company.name}`;$("#company-agent-result").hidden=true;$("#company-agent-result").replaceChildren();localStorage.setItem("activeCompany",JSON.stringify(company))};
 
 setupSearch($("#search"),$("#results"),selectCompany);
 setupMarketGuide(document.querySelector(".analysis-entry"),company=>{selectCompany(company);$("#run").click()},"시장과 업종에서 분석할 기업 고르기");
@@ -20,6 +20,42 @@ $("#run").onclick=runAnalysis;
 $("#price-period").onchange=()=>{if(selected)runAnalysis()};
 $("#analysis-purpose").onchange=()=>{if(analysis)renderDecision(analysis)};
 $("#analysis-csv").onclick=()=>{if(analysis)downloadCsv(analysis)};
+const agentForm=$("#company-agent-form"),agentQuestion=$("#company-agent-question"),agentResult=$("#company-agent-result"),agentSubmit=$("#company-agent-submit");
+document.querySelectorAll("[data-agent-question]").forEach(button=>button.onclick=()=>{agentQuestion.value=button.dataset.agentQuestion;agentQuestion.focus()});
+const agentText=(element,text)=>{const item=document.createElement(element);item.textContent=text;return item};
+const agentValue=(value,unit)=>unit==="원"?money(value):`${Number(value).toFixed(1)}%`;
+agentForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const company=selected||analysis?.company;
+  if(!company?.corpCode){agentResult.hidden=false;agentResult.replaceChildren(agentText("p","먼저 기업을 검색해 선택해 주세요."));return}
+  agentSubmit.disabled=true;agentResult.hidden=false;agentResult.replaceChildren(agentText("p","AI가 필요한 조회 도구를 고르고 DART 공시를 확인하는 중입니다."));
+  try{
+    const response=await fetch("/api/company-agent",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({corpCode:company.corpCode,question:agentQuestion.value.trim()}),signal:AbortSignal.timeout(55000)});
+    const answer=await response.json();
+    if(!response.ok)throw new Error(answer.error||"근거를 확인하지 못했습니다.");
+    const evidence=answer.evidence||{};
+    const nodes=[agentText("h3",answer.status==="ready"?"공시 근거 확인 결과":"확인할 수 있는 자료가 부족합니다"),agentText("p",answer.explanation||"")];
+    if(answer.status==="ready"&&answer.tool==="get_financial_trend"){
+      const grid=document.createElement("div");grid.className="company-agent-figures";
+      grid.append(agentText("span",`${evidence.previous.year}년 · ${agentValue(evidence.previous.value,evidence.unit)}`),agentText("span",`${evidence.current.year}년 · ${agentValue(evidence.current.value,evidence.unit)}`));
+      const change=evidence.unit==="원"?money(evidence.difference):`${evidence.difference>=0?"+":""}${Number(evidence.difference).toFixed(1)}%p`;
+      grid.append(agentText("strong",`${evidence.label} 변화 ${change}`));nodes.push(grid);
+      nodes.push(agentText("small",`DART 사업보고서 · ${evidence.basis} 기준 · ${evidence.calculation}`));
+      if(evidence.comparisonNote)nodes.push(agentText("small",evidence.comparisonNote));
+    }else if(answer.status!=="ready")nodes.push(agentText("p",evidence.reason||"비교 가능한 공시가 없습니다."));
+    nodes.push(agentText("p",answer.nextCheck||""));
+    const sources=document.createElement("div");sources.className="company-agent-sources";
+    for(const source of evidence.sources||[]){
+      if(!/^https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?rcpNo=\d{14}$/.test(source.url))continue;
+      const link=document.createElement("a");link.href=source.url;link.target="_blank";link.rel="noopener noreferrer";
+      link.textContent=`${source.year?source.year+"년 · ":""}${source.title} · DART 원문 ↗`;sources.append(link);
+    }
+    if(sources.childElementCount)nodes.push(sources);
+    nodes.push(agentText("small",`조회 도구: ${answer.tool==="get_financial_trend"?"재무 추이":"최근 공시"} · 자동 계산과 AI 설명을 분리했습니다. 투자 판단 전 원문을 확인하세요.`));
+    agentResult.replaceChildren(...nodes);
+  }catch(error){agentResult.replaceChildren(agentText("p",error.message))}
+  finally{agentSubmit.disabled=false}
+});
 
 async function runAnalysis(){
   if(!selected){$("#status").textContent="먼저 분석할 기업을 선택해 주세요.";return}
@@ -79,6 +115,7 @@ function qualityChecks(company,financials,macro,benchmark){
 
 function renderAnalysis(data){
   $("#status").hidden=true;$("#content").hidden=false;renderDecision(data);renderSummary(data);renderHealth(data);renderFactors(data);renderMarket(data);renderFinancials(data);renderResearch(data);
+  agentResult.hidden=true;agentResult.replaceChildren();
   $("#open-lab").href=`/correlation.html?${new URLSearchParams({mode:"company-macro",company:data.company.corpCode,b:"usd-krw",autorun:"1"})}#analysis-settings`;
   $("#decision").scrollIntoView({behavior:"smooth",block:"start"});
 }

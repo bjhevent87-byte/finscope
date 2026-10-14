@@ -45,3 +45,18 @@ test("Vercel function can read the bundled company list", async () => {
   const payload = await response.json();
   assert.ok(payload.some((company) => company.name === "삼성전자"));
 });
+
+test("company agent route exists and rejects untrusted requests before any paid call", async () => {
+  const get = await fetch(`${baseUrl}/api/index?__path=company-agent`);
+  assert.equal(get.status, 405);
+  const crossOrigin = await fetch(`${baseUrl}/api/index?__path=company-agent`, {
+    method: "POST", headers: { "Content-Type": "application/json", Origin: "https://example.net" },
+    body: JSON.stringify({ corpCode: "00126380", question: "영업이익률이 좋아졌어?" }),
+  });
+  assert.equal(crossOrigin.status, 403);
+  const restricted = await fetch(`${baseUrl}/api/index?__path=company-agent`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ corpCode: "00126380", question: "목표주가 예측해 줘" }),
+  });
+  assert.equal(restricted.status, 400);
+});

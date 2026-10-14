@@ -19,6 +19,21 @@
 .methodology{display:grid;grid-template-columns:260px 1fr;gap:26px}.methodology ol{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0;padding:0;list-style:none}.methodology li{display:grid;gap:7px;padding:18px;border-radius:15px;background:#f5f8fc}.methodology li b{color:#1769e0}.methodology li span{color:#57667b;font-size:13px;line-height:1.6}
 .tag{display:inline-flex;align-items:center;align-self:flex-start;padding:7px 10px;border-radius:999px;background:#edf4ff;color:#1769e0;font-size:12px;font-weight:750}.button.secondary{border:1px solid #cdd9e8;background:#fff;color:#1769e0}
 .chart{min-height:470px}.chart canvas{height:470px}
+.company-agent{margin-top:20px}.company-agent-examples{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.company-agent-selected{margin:10px 0 0;color:#1769d2;font-size:13px;font-weight:750}
+.company-agent>.section-row>.tag{flex:none;white-space:nowrap}
+.company-agent-examples button{padding:10px 13px;border:1px solid #cbdcf4;border-radius:999px;background:#f5f9ff;color:#1769d2;font-size:13px;font-weight:750;cursor:pointer}
+.company-agent-examples button:hover{background:#e8f3ff}
+.company-agent-form{display:grid;gap:8px}.company-agent-form label{font-size:14px;font-weight:800}.company-agent-form>div{display:flex;gap:9px}
+.company-agent-form input{flex:1;min-width:0;height:46px;padding:0 14px;border:1px solid #cdd9e8;border-radius:11px;background:#fff;font-size:15px}
+.company-agent-form button:disabled{opacity:.55;cursor:wait}.company-agent>.note{margin:10px 0 0}
+.company-agent-result{display:grid;gap:13px;margin-top:19px;padding:22px;border:1px solid #cbdcf4;border-radius:16px;background:#f7fbff;font-size:15px;line-height:1.65}
+.company-agent-result h3,.company-agent-result p{margin:0}.company-agent-result h3{font-size:19px}.company-agent-result small{color:#64758d;font-size:12px}
+.company-agent-figures{display:flex;flex-wrap:wrap;gap:9px}.company-agent-figures>*{padding:10px 14px;border:1px solid #d8e5f6;border-radius:10px;background:#fff}
+.company-agent-figures strong{color:#1769d2}.company-agent-sources{display:flex;flex-wrap:wrap;gap:8px}
+.company-agent-sources a{padding:9px 12px;border:1px solid #bad2f5;border-radius:9px;background:#fff;color:#1769d2;font-size:13px;font-weight:750;text-decoration:none}
+.company-agent-sources a:hover{text-decoration:underline}
 @media(max-width:1200px){.summary-grid{grid-template-columns:repeat(2,1fr)}.health-grid{grid-template-columns:repeat(3,1fr)}.methodology{grid-template-columns:1fr}}
 @media(max-width:820px){html,body{max-width:100%;overflow-x:hidden}.topbar{max-width:100vw;overflow-x:auto}.topbar nav{min-width:max-content}.workspace-side{max-width:100vw}.page,.analysis-entry,#content,#content>*{min-width:0;max-width:100%}.analysis-entry>.toolbar{display:grid;grid-template-columns:1fr 1fr}.analysis-entry .toolbar .field{min-width:0}.analysis-entry .toolbar .wide{grid-column:1/-1;min-width:0}.decision-card,.analysis-two-column{grid-template-columns:1fr}.decision-card h2{white-space:normal!important;overflow-wrap:anywhere}.factor-grid,.market-metrics,.methodology ol{grid-template-columns:1fr 1fr}.health-grid{grid-template-columns:1fr 1fr}.analysis-section,#executive-summary,.analysis-entry{padding:20px}.decision-card{padding:24px}.chart,.chart canvas{height:390px;min-height:390px}}
 @media(max-width:560px){.summary-grid,.health-grid,.factor-grid,.market-metrics,.methodology ol{grid-template-columns:1fr}.company-hero h1{font-size:38px}.decision-card h2{font-size:24px}}
+@media(max-width:560px){.company-agent-form>div{flex-direction:column}.company-agent-form button{width:100%}}

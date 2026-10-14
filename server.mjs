@@ -4,7 +4,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMacroService, correlationInterpretation, macroSeriesCsv } from "./macro-data.mjs";
-import { handleAiGuide } from "./ai-guide-api.mjs";
+import { handleAiGuide, spendAccess, aiGuideStatus } from "./ai-guide-api.mjs";
+import { buildTrendEvidence, runCompanyAgent } from "./company-agent.mjs";
 import { stockDisplayName } from "./public/stock-identity.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -907,6 +908,103 @@ async function dartFilings(corpCode, beginDate, endDate, type = "", detailType =
   return filings;
 }
 
+async function agentTrend(company, metric) {
+  const year = Number(kstDate().slice(0, 4)) - 1;
+  const key = `company-agent:${company.corpCode}:${metric}:${year}`;
+  if (cache.has(key)) return cache.get(key);
+  const [latestRows, priorRows, info, latestFilings, priorFilings] = await Promise.allSettled([
+    dartStatement(company.corpCode, year),
+    dartStatement(company.corpCode, year - 1),
+    dartCompanyInfo(company.corpCode),
+    dartFilings(company.corpCode, `${year + 1}0101`, `${year + 1}1231`, "A", "A001", true),
+    dartFilings(company.corpCode, `${year}0101`, `${year}1231`, "A", "A001", true),
+  ]);
+  if ([latestRows, priorRows, info, latestFilings, priorFilings].some((result) => result.status === "rejected")) {
+    return { status: "insufficient", reason: "DART의 재무 수치 또는 사업보고서 원문을 확인하지 못했습니다." };
+  }
+  const reportFor = (items, reportYear) => items.value.find((item) =>
+    new RegExp(`\\(${reportYear}\\.\\d{2}\\)`).test(item.reportName) && /^\d{14}$/.test(item.receiptNo));
+  const sources = [year - 1, year].map((reportYear) => {
+    const match = reportFor(reportYear === year ? latestFilings : priorFilings, reportYear);
+    return match && { year: reportYear, title: match.reportName, receiptDate: match.receiptDate, url: match.url };
+  }).filter(Boolean);
+  const latest = summarize(latestRows.value, year);
+  const directlyReportedPrior = summarize(priorRows.value, year - 1);
+  const comparativePrior = summarize(latestRows.value, year - 1, "11011", "frmtrm_amount", year);
+  const useComparative = Number.isFinite(comparativePrior[metric]);
+  const previous = useComparative ? comparativePrior : directlyReportedPrior;
+  const evidence = buildTrendEvidence({
+    company: { name: stockDisplayName(company), isFinancial: isFinancialIndustry(info.value.induty_code) },
+    metric, current: latest, previous, sources,
+  });
+  if (evidence.status === "ready") evidence.comparisonNote = useComparative
+    ? `${year}년 사업보고서의 전기 비교표 수치를 사용했습니다.`
+    : `${year - 1}년 사업보고서 직접 공시 수치를 사용했습니다.`;
+  if (evidence.status === "ready") cache.set(key, evidence, 30 * 60_000);
+  return evidence;
+}
+
+async function agentFilings(company) {
+  const today = kstDate();
+  const start = `${Number(today.slice(0, 4)) - 1}${today.slice(4)}`;
+  const filings = await dartFilings(company.corpCode, start, today);
+  return filings.length ? {
+    status: "ready", company: stockDisplayName(company),
+    sources: filings.slice(0, 5).map(({ reportName, receiptDate, url }) => ({ title: reportName, receiptDate, url })),
+    caution: "공시 제목·날짜만 확인했습니다. 재무 수치와 내용은 원문에서 확인하세요.",
+  } : { status: "insufficient", reason: "최근 일 년의 DART 공시가 확인되지 않았습니다." };
+}
+
+async function agentBody(req) {
+  if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === "string" || Buffer.isBuffer(req.body)) return JSON.parse(String(req.body));
+  const chunks = []; let bytes = 0;
+  for await (const chunk of req) {
+    bytes += chunk.length;
+    if (bytes > 2048) throw new Error("too_large");
+    chunks.push(chunk);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+}
+
+async function handleCompanyAgent(req, res) {
+  if (req.method !== "POST") return json(res, 405, { error: "POST 요청만 지원합니다." });
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  if (req.headers.origin) {
+    let originHost = "";
+    try { originHost = new URL(req.headers.origin).host; } catch {}
+    if (originHost !== host) return json(res, 403, { error: "이 사이트에서만 요청할 수 있습니다." });
+  }
+  if (!String(req.headers["content-type"] || "").toLowerCase().startsWith("application/json")) return json(res, 415, { error: "JSON 요청만 지원합니다." });
+  let body;
+  try { body = await agentBody(req); } catch { return json(res, 400, { error: "질문 형식을 확인해 주세요." }); }
+  const question = typeof body.question === "string" ? body.question.trim() : "";
+  const corpCode = String(body.corpCode || "");
+  if (!question || question.length > 180 || !/^\d{8}$/.test(corpCode)) return json(res, 400, { error: "기업과 180자 이내 질문을 입력해 주세요." });
+  if (/목표\s*주가|매수|매도|주가\s*예측|수익\s*보장|계좌|비밀번호|주민등록/.test(question)) {
+    return json(res, 400, { error: "투자 권유·주가 예측·개인정보 질문은 지원하지 않습니다." });
+  }
+  if (!DART_KEY || !aiGuideStatus(env).available) return json(res, 503, { error: "DART 또는 AI 연결이 준비되지 않았습니다." });
+  const list = await loadCompanies();
+  const company = list.find((item) => item.corpCode === corpCode);
+  if (!company) return json(res, 404, { error: "기업을 찾지 못했습니다." });
+  const access = spendAccess(clientIp(req), env);
+  if (!access.allowed) return json(res, 429, { error: access.reason === "cooldown"
+    ? `${access.retryAfterSeconds}초 뒤에 다시 질문해 주세요.`
+    : "오늘의 AI 시험 호출 한도에 도달했습니다.", retryAfterSeconds: access.retryAfterSeconds || 0 });
+  try {
+    const answer = await runCompanyAgent({
+      question, company, apiKey: env.OPENAI_API_KEY || env.OPEN_API_KEY,
+      model: env.FINSCOPE_AI_MODEL || "gpt-6-luna",
+      getTrend: (metric) => agentTrend(company, metric),
+      getFilings: () => agentFilings(company),
+    });
+    return json(res, 200, answer);
+  } catch {
+    return json(res, 502, { error: "근거 확인을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." });
+  }
+}
+
 function median(values) {
   const valid = values.filter(Number.isFinite).sort((a, b) => a - b);
   if (!valid.length) return null;
@@ -967,6 +1065,7 @@ async function buildBenchmarks(selected, year, reportCode, beginDate = "", endDa
 }
 
 async function api(req, res, url) {
+  if (url.pathname === "/api/company-agent") return handleCompanyAgent(req, res);
   if (url.pathname === "/api/ai-guide" || url.pathname === "/api/ai-guide/status") {
     return handleAiGuide(req, res, url, env, json, clientIp);
   }

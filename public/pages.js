@@ -1,9 +1,4 @@
 export const $=(s)=>document.querySelector(s);
-if(!document.querySelector('link[data-finscope-fonts]'))document.head.insertAdjacentHTML("beforeend",'<link data-finscope-fonts rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">');
-document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="ui-v7.css?v=16">');
-document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="pages-v11.css?v=17">');
-document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="workspace-refresh.css?v=2">');
-document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="workspace-unified.css?v=6">');
 export const money=(v)=>{if(!Number.isFinite(v))return"공시 계정 없음";const a=Math.abs(v),s=v<0?"-":"";if(a>=1e12)return`${s}${(a/1e12).toFixed(a>=1e14?0:1)}조`;if(a>=1e8)return`${s}${(a/1e8).toFixed(0)}억`;return`${Math.round(v).toLocaleString("ko-KR")}원`};
 export const percent=(v)=>Number.isFinite(v)?`${v.toFixed(1)}%`:"자료 없음";
 export function setupSearch(input,results,onPick,clearAfterPick=false,endpoint="/api/companies"){
@@ -68,17 +63,17 @@ function setupWorkspaceNavigation() {
 export function nav(active) {
   document.body.classList.add("workspace-navigation");
   const links = [
-    ["home", "/", "⌂", "홈"], ["correlation", "/correlation.html", "⌁", "데이터 실험실"],
-    ["compare", "/index.html", "▦", "기업 비교"], ["company", "/company.html", "◎", "기업 분석"],
+    ["home", "/", "⌂", "홈"], ["compare", "/index.html", "▦", "기업 비교"],
+    ["company", "/company.html", "◎", "기업 분석"],
     ["filings", "/filings.html", "▤", "DART 공시"], ["research", "/research.html", "⌕", "리포트"],
-    ["backtest", "/backtest.html", "↗", "백테스트"], ["etf", "/etf.html", "◇", "ETF 비교"],
+    ["correlation", "/correlation.html", "⌁", "데이터 실험실"], ["backtest", "/backtest.html", "↗", "백테스트"], ["etf", "/etf.html", "◇", "ETF 비교"],
   ];
   const topActive = active === "mission" ? "correlation" : active;
   const topLinks = links.map(([key, href, icon, label]) => `<a class="${topActive === key ? "active" : ""}" href="${href}">${label}</a>`).join("");
   const localMenus = {
     correlation: [["#relationship-overview", "◎", "처음 보기"], ["#analysis-examples", "☆", "궁금한 질문 고르기"], ["#analysis-settings", "⚙", "두 데이터 비교"], ["#scatter-analysis", "⌁", "월별 움직임"], ["#matrix-analysis", "▦", "관계의 방향"], ["#lag-analysis", "↔", "먼저 움직인 쪽"], ["#rolling-analysis", "∿", "시간별 관계 변화"], ["#method-guide", "?", "계산 방법"], ["#industry-lab", "◆", "시장 변화와 업종"]],
     mission: [["#mission-overview", "◆", "처음 보기"], ["#mission-result", "▦", "업종별 결과"], ["#mission-chart", "↗", "업종 움직임"], ["#company-check", "◎", "대표기업 주가"], ["#mission-method", "?", "계산 방법"]],
-    company: [["#company-overview", "◎", "분석 시작"], ["#company-analysis", "⌕", "기업·목적 선택"], ["#decision", "✓", "한 줄 결론"], ["#financial-health", "▦", "재무 상태"], ["#external-factors", "↔", "환율·금리 관계"], ["#market-behavior", "↗", "주가·거래량"], ["#financials", "≡", "연도별 재무"], ["#company-research", "▤", "관련 리포트"], ["#analysis-method", "?", "분석 기준"]],
+    company: [["#company-overview", "◎", "분석 시작"], ["#company-analysis", "⌕", "기업·목적 선택"], ["#decision", "✓", "한 줄 결론"], ["#company-agent", "✦", "공시 근거 AI 질문"], ["#financial-health", "▦", "재무 상태"], ["#external-factors", "↔", "환율·금리 관계"], ["#market-behavior", "↗", "주가·거래량"], ["#financials", "≡", "연도별 재무"], ["#company-research", "▤", "관련 리포트"], ["#analysis-method", "?", "분석 기준"]],
     filings: [["#filings-overview", "◎", "공시 한눈에"], ["#filing-search", "⌕", "기업·기간 선택"], ["#list", "▤", "결과 보기"]],
     research: [["#research-overview", "◎", "리포트 한눈에"], ["#research-search", "⌕", "기업 고르기"], ["#links", "↗", "리포트 찾기"], ["#research-policy", "!", "확인할 점"]],
     backtest: [["#backtest-overview", "◎", "처음 보기"], ["#backtest-builder", "+", "자산 담기"], ["#weights", "%", "비중 정하기"], ["#summary", "▦", "결과 비교"], ["#backtest-policy", "!", "꼭 확인할 점"]],

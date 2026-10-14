@@ -1,11 +1,11 @@
 // FinScope AI Guide v1: financial facts are never generated here or by the model.
 export const GUIDE_ROUTES = Object.freeze({
   home: { label: "경제·업종 지표 보기", menuLabel: "홈", menuHint: "경제지표·산업별 지표", href: "/home.html", detail: "발표 기준일과 출처를 확인하며 경제·업종 지표를 살펴보세요." },
-  correlation: { label: "데이터 실험실 보기", menuLabel: "데이터 실험실", menuHint: "상관관계·산업 스트레스", href: "/correlation.html", detail: "환율·금리·주가의 동반 움직임과 업종 반응을 살펴보세요. 상관관계는 인과관계가 아닙니다." },
   compare: { label: "기업 비교하기", menuLabel: "기업 비교", menuHint: "조건으로 후보 찾기", href: "/index.html", detail: "시장·업종을 고르고 재무 지표를 같은 기준으로 비교해 보세요." },
   company: { label: "기업 분석하기", menuLabel: "기업 분석", menuHint: "한 기업의 재무·주가", href: "/company.html", detail: "선택한 기업의 공시 재무, 주가, 외부요인을 차례로 확인해 보세요." },
   filings: { label: "DART 공시 확인하기", menuLabel: "DART 공시", menuHint: "사업보고서·공시 원문", href: "/filings.html", detail: "공시 원문과 공시일을 직접 확인해 보세요." },
   research: { label: "증권사 리포트 보기", menuLabel: "리포트", menuHint: "네이버·한경 리포트", href: "/research.html", detail: "외부 리포트의 발행일과 작성 기관을 확인해 보세요." },
+  correlation: { label: "데이터 실험실 보기", menuLabel: "데이터 실험실", menuHint: "상관관계·산업 스트레스", href: "/correlation.html", detail: "환율·금리·주가의 동반 움직임과 업종 반응을 살펴보세요. 상관관계는 인과관계가 아닙니다." },
   backtest: { label: "지난 성과 비교하기", menuLabel: "백테스트", menuHint: "과거 수익률·자산 비중", href: "/backtest.html", detail: "과거 수익률과 기간별 변동을 확인해 보세요. 미래 성과를 보장하지 않습니다." },
   etf: { label: "ETF 비교하기", menuLabel: "ETF 비교", menuHint: "수익률·NAV·괴리율", href: "/etf.html", detail: "ETF의 종가, NAV, 괴리율을 같은 날짜 기준으로 비교해 보세요." },
 });
