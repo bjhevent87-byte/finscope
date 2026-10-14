@@ -10,12 +10,12 @@
     <link rel="icon" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link rel="stylesheet" href="pages.css?v=17">
-    <link rel="stylesheet" href="company.css?v=3">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="ui-v7.css?v=19">
     <link rel="stylesheet" href="pages-v11.css?v=17">
     <link rel="stylesheet" href="workspace-refresh.css?v=2">
     <link rel="stylesheet" href="workspace-unified.css?v=6">
+    <link rel="stylesheet" href="company.css?v=4">
     <script defer src="/pwa.js?v=6"></script>
   </head>
   <body class="workspace-navigation">
@@ -24,39 +24,40 @@
       <section class="hero company-hero" id="company-overview">
         <p class="eyebrow">COMPANY PERFORMANCE ANALYSIS</p>
         <h1>이 기업, 실적은 좋아지고 있을까요?<br><em>재무 상태부터 주가까지 살펴보세요</em></h1>
-        <p class="hero-copy">최근 3년 실적과 현금흐름을 보고, 같은 업종 기업과 비교해요.<br>주가가 환율·금리와 어떻게 움직였는지도 함께 확인할 수 있어요.</p>
-        <div class="hero-principles" aria-label="기업분석 기준">
-          <span><b>01</b> 목적부터 정하기</span>
-          <span><b>02</b> 숫자보다 추세 보기</span>
-          <span><b>03</b> 업종과 함께 비교하기</span>
+        <p class="hero-copy">기업을 고르면 최근 실적·현금흐름·주가를 같은 업종과 함께 살펴볼 수 있어요.</p>
+        <details class="company-hero-more">
+          <summary>어떤 자료로 분석하나요? <span>기준·출처 보기</span></summary>
+          <p>DART 사업보고서의 재무 숫자, KRX 주가, ECOS 환율·금리를 사용합니다. 재무제표의 연도와 연결·별도 기준을 함께 확인해 주세요. 빠진 값은 0으로 채우지 않아요.</p>
+        </details>
+        <div class="company-start" id="company-analysis">
+          <div class="company-start-heading"><strong>어떤 기업을 살펴볼까요?</strong><span>기업 선택 → 목적 선택 → 분석</span></div>
+          <div class="toolbar">
+            <label class="field wide search-host">분석할 기업
+              <input id="search" placeholder="예: 삼성전자, 005930">
+              <div class="search-results" id="results" hidden></div>
+            </label>
+            <label class="field">분석 목적
+              <select id="analysis-purpose">
+                <option value="investment">투자 후보 검토</option>
+                <option value="credit">여신·상환능력 검토</option>
+                <option value="performance">경영성과 진단</option>
+              </select>
+            </label>
+            <label class="field">주가·환율·금리 비교 기간
+              <select id="price-period">
+                <option value="1">1년</option>
+                <option value="3" selected>3년</option>
+                <option value="5">5년</option>
+                <option value="max">최대(2020~)</option>
+              </select>
+            </label>
+            <button class="button" id="run">기업 분석하기 →</button>
+          </div>
+          <div id="status" class="status" aria-live="polite">기업을 검색하거나 아래 시장·업종 목록에서 선택해 주세요.</div>
         </div>
       </section>
 
-      <section class="panel analysis-entry" id="company-analysis">
-        <div class="toolbar">
-          <label class="field wide search-host">분석할 기업
-            <input id="search" placeholder="예: 삼성전자, 005930">
-            <div class="search-results" id="results" hidden></div>
-          </label>
-          <label class="field">분석 목적
-            <select id="analysis-purpose">
-              <option value="investment">투자 후보 검토</option>
-              <option value="credit">여신·상환능력 검토</option>
-              <option value="performance">경영성과 진단</option>
-            </select>
-          </label>
-          <label class="field">주가·환율·금리 비교 기간
-            <select id="price-period">
-              <option value="1">1년</option>
-              <option value="3" selected>3년</option>
-              <option value="5">5년</option>
-              <option value="max">최대(2020~)</option>
-            </select>
-          </label>
-          <button class="button" id="run">기업 분석하기</button>
-        </div>
-        <div id="status" class="status">기업을 검색하거나 아래 시장·업종 목록에서 선택해 주세요.</div>
-
+      <section class="panel analysis-entry">
         <section class="analysis-section company-agent" id="company-agent">
           <div class="section-row">
             <div><p class="eyebrow">EVIDENCE-BASED AI AGENT</p><h2>공시 숫자에 근거해 질문하기</h2>
@@ -75,8 +76,10 @@
               <button type="submit" class="button" id="company-agent-submit">공시 근거로 답변</button></div>
           </form>
           <p class="company-agent-selected" id="company-agent-selected">질문할 기업을 먼저 선택해 주세요.</p>
-          <p class="note">현재 질문 범위: 영업이익률·매출·ROE·부채비율·영업현금흐름의 연간 변화, 최근 공시 목록.</p>
-          <p class="note">AI 호출은 기존 길잡이와 하루 시험 한도를 공유합니다. 서버별 한도이므로 전체 요금 상한은 아닙니다.</p>
+          <details class="company-agent-scope"><summary>질문 범위와 사용 안내</summary>
+            <p>영업이익률·매출·ROE·부채비율·영업현금흐름의 연간 변화와 최근 공시를 확인할 수 있습니다.</p>
+            <p>AI 호출은 길잡이와 하루 시험 한도를 공유합니다. 서버별 사용 제한이며 전체 요금의 확정 상한은 아닙니다.</p>
+          </details>
           <div id="company-agent-result" class="company-agent-result" aria-live="polite" hidden></div>
         </section>
 
@@ -96,6 +99,7 @@
               <button type="button" class="button secondary" id="analysis-csv">분석 결과 내려받기</button>
             </div>
             <div class="grid summary-grid" id="summary"></div>
+            <details class="summary-more" id="summary-more"><summary>다른 지표도 보기</summary><div class="grid summary-grid" id="summary-extra"></div></details>
           </section>
 
           <section class="analysis-section" id="financial-health">

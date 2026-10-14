@@ -33,5 +33,19 @@ test("late company analysis cannot hide a completed AI answer", async () => {
   const renderAnalysis = company.split("function renderAnalysis(data){")[1]?.split("function decisionModel")[0] || "";
   assert.ok(renderAnalysis);
   assert.ok(!renderAnalysis.includes("agentResult.hidden=true"));
-  assert.ok(company.includes("agentResult.hidden=false;agentResult.replaceChildren(...nodes)"));
+  assert.ok(company.includes("agentResult.hidden=false;agentResult.replaceChildren(main,facts)"));
+});
+
+test("company analysis keeps the first action and evidence controls next to the headline", async () => {
+  const html = await read("company.html");
+  const hero = html.split('<section class="hero company-hero"')[1]?.split('</section>')[0] || "";
+  assert.match(hero, /id="company-analysis"/);
+  assert.match(hero, /id="search"/);
+  assert.match(hero, /id="run"/);
+  assert.match(hero, /class="company-hero-more"/);
+  assert.match(html, /id="summary-extra"/);
+  const company = await read("company.js");
+  assert.match(company, /company-agent-proof/);
+  assert.match(company, /company-agent-basis/);
+  assert.match(company, /DART 원문에서 확인하기/);
 });

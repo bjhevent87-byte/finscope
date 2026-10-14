@@ -23,6 +23,7 @@ $("#analysis-csv").onclick=()=>{if(analysis)downloadCsv(analysis)};
 const agentForm=$("#company-agent-form"),agentQuestion=$("#company-agent-question"),agentResult=$("#company-agent-result"),agentSubmit=$("#company-agent-submit");
 document.querySelectorAll("[data-agent-question]").forEach(button=>button.onclick=()=>{agentQuestion.value=button.dataset.agentQuestion;agentQuestion.focus()});
 const agentText=(element,text)=>{const item=document.createElement(element);item.textContent=text;return item};
+const agentBlock=(className,...children)=>{const item=document.createElement("div");item.className=className;item.append(...children);return item};
 const agentValue=(value,unit)=>unit==="원"?money(value):`${Number(value).toFixed(2)}%`;
 agentForm.addEventListener("submit",async event=>{
   event.preventDefault();
@@ -33,26 +34,27 @@ agentForm.addEventListener("submit",async event=>{
     const response=await fetch("/api/company-agent",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({corpCode:company.corpCode,question:agentQuestion.value.trim()}),signal:AbortSignal.timeout(55000)});
     const answer=await response.json();
     if(!response.ok)throw new Error(answer.error||"근거를 확인하지 못했습니다.");
-    const evidence=answer.evidence||{};
-    const nodes=[agentText("h3",answer.status==="ready"?"공시 근거 확인 결과":"확인할 수 있는 자료가 부족합니다"),agentText("p",answer.explanation||"")];
+    const evidence=answer.evidence||{},ready=answer.status==="ready";
+    const main=agentBlock("company-agent-answer",agentText("span",ready?"공시 근거 답변":"자료 확인 필요"),agentText("h3",answer.explanation||(ready?"공시 자료를 확인했습니다.":"비교 가능한 자료를 찾지 못했습니다.")));
+    if(answer.nextCheck)main.append(agentBlock("company-agent-next",agentText("b","다음에 확인할 점"),agentText("p",answer.nextCheck)));
+    const facts=agentBlock("company-agent-proof",agentText("h4",ready?"답변에 사용한 근거":"확인한 자료"));
     if(answer.status==="ready"&&answer.tool==="get_financial_trend"){
-      const grid=document.createElement("div");grid.className="company-agent-figures";
-      grid.append(agentText("span",`${evidence.previous.year}년 · ${agentValue(evidence.previous.value,evidence.unit)}`),agentText("span",`${evidence.current.year}년 · ${agentValue(evidence.current.value,evidence.unit)}`));
-      const change=evidence.unit==="원"?money(evidence.difference):`${evidence.difference>=0?"+":""}${Number(evidence.difference).toFixed(2)}%p`;
-      grid.append(agentText("strong",`${evidence.label} 변화 ${change}`));nodes.push(grid);
-      nodes.push(agentText("small",`DART 사업보고서 · ${evidence.basis} 기준 · ${evidence.calculation}`));
-      if(evidence.comparisonNote)nodes.push(agentText("small",evidence.comparisonNote));
-    }else if(answer.status!=="ready")nodes.push(agentText("p",evidence.reason||"비교 가능한 공시가 없습니다."));
-    nodes.push(agentText("p",answer.nextCheck||""));
+      const change=evidence.unit==="원"?`${evidence.difference>=0?"+":""}${money(evidence.difference)}`:`${evidence.difference>=0?"+":""}${Number(evidence.difference).toFixed(2)}%p`;
+      const figure=(label,value)=>agentBlock("company-agent-figure",agentText("span",label),agentText("strong",value));
+      facts.append(agentBlock("company-agent-figures",figure(`${evidence.previous.year}년`,agentValue(evidence.previous.value,evidence.unit)),figure(`${evidence.current.year}년`,agentValue(evidence.current.value,evidence.unit)),figure(`${evidence.label} 변화`,change)));
+      const basis=document.createElement("details");basis.className="company-agent-basis";basis.append(agentText("summary","비교·계산 기준 보기"),agentText("p",`DART 사업보고서 · ${evidence.basis} 기준 · ${evidence.calculation}`));
+      if(evidence.comparisonNote)basis.append(agentText("p",evidence.comparisonNote));facts.append(basis);
+    }else if(!ready)facts.append(agentText("p",evidence.reason||"비교 가능한 공시가 없습니다."));
     const sources=document.createElement("div");sources.className="company-agent-sources";
     for(const source of evidence.sources||[]){
       if(!/^https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?rcpNo=\d{14}$/.test(source.url))continue;
       const link=document.createElement("a");link.href=source.url;link.target="_blank";link.rel="noopener noreferrer";
       link.textContent=`${source.year?source.year+"년 · ":""}${source.title} · DART 원문 ↗`;sources.append(link);
     }
-    if(sources.childElementCount)nodes.push(sources);
-    nodes.push(agentText("small",`조회 도구: ${answer.tool==="get_financial_trend"?"재무 추이":"최근 공시"} · 자동 계산과 AI 설명을 분리했습니다. 투자 판단 전 원문을 확인하세요.`));
-    agentResult.hidden=false;agentResult.replaceChildren(...nodes);
+    if(sources.childElementCount)facts.append(agentText("h4","DART 원문에서 확인하기"),sources);
+    else facts.append(agentText("p","연결된 DART 원문 링크가 없습니다. 답변의 근거를 추가로 확인해 주세요."));
+    facts.append(agentText("small",`조회 도구: ${answer.tool==="get_financial_trend"?"재무 추이":"최근 공시"} · 숫자 계산과 AI 설명을 분리했습니다. 투자 판단 전 원문을 확인하세요.`));
+    agentResult.hidden=false;agentResult.replaceChildren(main,facts);
   }catch(error){agentResult.hidden=false;agentResult.replaceChildren(agentText("p",error.message))}
   finally{agentSubmit.disabled=false}
 });
@@ -130,20 +132,37 @@ function decisionModel(data){
   else{title=`${data.company.name}: 뚜렷한 단일 위험요인보다 추세의 지속성을 확인하세요.`;copy=`${purposeLabel} 관점에서 한 가지 숫자로 단정하기 어렵습니다. 재무 3년 추세, 업종 내 위치, 현금흐름을 함께 읽는 것이 적절합니다.`}
   return{title,copy,evidence:evidence.slice(0,4)};
 }
-function renderDecision(data){const model=decisionModel(data);$("#decision-title").textContent=model.title;$("#decision-copy").textContent=model.copy;$("#decision-evidence").innerHTML=model.evidence.map((text,index)=>`<div class="evidence-row"><b>근거 ${index+1}</b><span>${esc(text)}</span></div>`).join("")}
+function renderDecision(data){
+  const model=decisionModel(data),evidence=$("#decision-evidence");$("#decision-title").textContent=model.title;$("#decision-copy").textContent=model.copy;
+  const row=(text,index)=>`<div class="evidence-row"><b>근거 ${index+1}</b><span>${esc(text)}</span></div>`;
+  evidence.innerHTML=model.evidence.length?`${row(model.evidence[0],0)}${model.evidence.length>1?`<details class="decision-more"><summary>나머지 근거 ${model.evidence.length-1}개 보기</summary>${model.evidence.slice(1).map((text,index)=>row(text,index+1)).join("")}</details>`:""}`:"<p>표시할 비교 근거가 없습니다. 아래 공시 자료를 확인해 주세요.</p>";
+}
 function renderSummary(data){
-  const f=data.latest,basis=f.year?`${f.year}년 사업보고서 · ${f.statementBasis||"연결 우선"}`:"선택 기간 공시 없음",cards=[["최신 종가",won(data.company.market?.price),`${dateText(data.company.market?.date)} 기준`],["분석기간 수익률",signedPercent(data.market.periodReturn),`${data.market.tradingDays}거래일`],["매출",money(f.revenue),basis],["영업이익",money(f.operatingProfit),basis],["순이익",money(f.netIncome),basis],["ROE",percent(f.roe),"단순 계산값"],[data.company.isFinancial?"자기자본":"부채비율",data.company.isFinancial?money(f.equity):percent(f.debtRatio),basis],["잉여현금흐름",money(f.fcf),finite(f.fcfMargin)?`매출 대비 ${percent(f.fcfMargin)}`:"영업CF-투자CF 기준"]];
-  $("#summary").innerHTML=cards.map(([title,value,sub])=>`<article class="card"><h3>${esc(title)}</h3><div class="value">${esc(value)}</div><div class="sub">${esc(sub)}</div></article>`).join("");
+  const f=data.latest,basis=f.year?`${f.year}년 사업보고서 · ${f.statementBasis||"기준 확인 필요"}`:"선택 기간 공시 없음";
+  const cards=[
+    ["최신 종가",won(data.company.market?.price),`${dateText(data.company.market?.date)} 기준`,"KRX 최근 확정 종가입니다. 재무 숫자와 발표일이 다를 수 있어요."],
+    ["분석기간 수익률",signedPercent(data.market.periodReturn),`${data.market.tradingDays}거래일`,"선택한 기간의 첫 종가와 마지막 종가를 비교한 값입니다. 배당 수익은 포함하지 않아요."],
+    ["매출",money(f.revenue),basis,"고객에게 재화와 서비스를 제공해 얻은 수익입니다. DART 사업보고서의 회계 기준을 확인해 주세요."],
+    ["영업이익",money(f.operatingProfit),basis,"본업에서 발생한 이익입니다. 비용 변화와 함께 읽어 주세요."],
+    ["순이익",money(f.netIncome),basis,"영업 외 손익과 세금까지 반영한 최종 이익입니다."],
+    ["ROE",percent(f.roe),`${f.year||"기준 연도 없음"}년 · DART 기반 계산`,"순이익을 자기자본으로 나눈 비율입니다. 업종과 계산 기간을 맞춰 비교해 주세요."],
+    [data.company.isFinancial?"자기자본":"부채비율",data.company.isFinancial?money(f.equity):percent(f.debtRatio),basis,data.company.isFinancial?"자산에서 부채를 뺀 자본입니다. 금융업 건전성은 BIS 비율·연체율도 따로 확인해야 해요.":"부채를 자기자본으로 나눈 비율입니다. 금융업에는 같은 판단 기준을 적용하지 않아요."],
+    ["잉여현금흐름",money(f.fcf),basis,"영업현금흐름에서 유형자산 취득액을 뺀 값입니다. 자본적 지출 계정이 없으면 실제 투자액을 충분히 반영하지 못할 수 있어요."],
+  ];
+  const primary=data.company.isFinancial?[0,4,5,6]:[0,2,3,7];
+  const card=([title,value,sub,description])=>`<article class="card"><h3>${esc(title)}</h3><div class="value">${esc(value)}</div><p class="sub">${esc(sub)}</p><details><summary>값 읽는 법</summary><p>${esc(description)}</p></details></article>`;
+  $("#summary").innerHTML=primary.map(index=>card(cards[index])).join("");
+  $("#summary-extra").innerHTML=cards.filter((_,index)=>!primary.includes(index)).map(card).join("");
 }
 function renderHealth(data){
   const basis=[...new Set(data.financials.map(item=>item.statementBasis).filter(Boolean))];$("#financial-basis").textContent=basis.length?`DART ${basis.join("·")} 기준`:"재무제표 기준 확인 필요";
-  $("#health-cards").innerHTML=data.metrics.map(item=>`<article class="health-card"><header><h3>${esc(item.label)}</h3><span class="trend-chip ${item.tone}">${item.state}</span></header><div class="health-value">${esc(item.display)}</div><div class="health-peer">${esc(item.peer)}${finite(item.change)?`<br>3년 변화 ${item.change>=0?"+":""}${item.format==="multiple"?item.change.toFixed(1)+"배":item.format==="money"?money(item.change):item.change.toFixed(1)+"%p"}`:""}</div><div class="metric-track"><i style="width:${item.peerCount?Math.max(8,100-(item.rank-1)/item.peerCount*100):50}%"></i></div></article>`).join("");
+  $("#health-cards").innerHTML=data.metrics.map(item=>`<article class="health-card"><header><h3>${esc(item.label)}</h3><span class="trend-chip ${item.tone}">${item.state}</span></header><div class="health-value">${esc(item.display)}</div><details class="health-context"><summary>업종 비교·3년 변화 보기</summary><p>${esc(item.peer)}${finite(item.change)?`<br>3년 변화 ${item.change>=0?"+":""}${item.format==="multiple"?item.change.toFixed(1)+"배":item.format==="money"?money(item.change):item.change.toFixed(1)+"%p"}`:""}</p></details></article>`).join("");
   const revGrowth=growth(data.financials.at(-1)?.revenue,data.financials.at(-2)?.revenue),opGrowth=growth(data.financials.at(-1)?.operatingProfit,data.financials.at(-2)?.operatingProfit),bullets=[];if(finite(revGrowth))bullets.push(`매출은 전년보다 ${signedPercent(revGrowth)} 변했습니다.`);if(finite(opGrowth))bullets.push(`영업이익은 전년보다 ${signedPercent(opGrowth)} 변했습니다.`);const worsening=data.metrics.filter(item=>item.state==="악화").map(item=>item.label);bullets.push(worsening.length?`${worsening.join("·")} 추세는 악화로 분류됐습니다.`:"최근 3년 지표에서 뚜렷한 동시 악화는 확인되지 않았습니다.");if(data.company.isFinancial)bullets.push("금융업은 BIS비율·NIM·연체율 등 전용 건전성 지표를 공시 원문에서 추가 확인해야 합니다.");
   $("#performance-insight").innerHTML=`<h3>실적에서 눈여겨볼 점</h3><p>올해 실적뿐 아니라 지난 3년의 변화와 실제 현금흐름도 살펴보세요.</p><ul class="insight-list">${bullets.map(text=>`<li><b>•</b><span>${esc(text)}</span></li>`).join("")}</ul>`;
   $("#data-quality").innerHTML=`<h3>비교하기 전에 확인한 자료</h3><ul class="quality-list">${data.quality.map(item=>`<li class="${item.ok?"ok":"warn"}"><b>${item.ok?"확인":"주의"}</b><span>${esc(item.text)}</span></li>`).join("")}</ul>`;
 }
 const growth=(current,prior)=>finite(current)&&finite(prior)&&prior!==0?(current/prior-1)*100:null;
-function renderFactors(data){$("#factor-cards").innerHTML=data.sensitivities.map(item=>{const value=finite(item.coefficient)?item.coefficient:null,position=finite(value)?(value+1)*50:50,coefficient=finite(value)?value.toFixed(2):"판단 유보";return`<article class="factor-card"><header><div><h3>${esc(item.name)}</h3><span class="trend-chip ${finite(value)&&Math.abs(value)>=.4?"bad":"neutral"}">${item.strength}</span></div><div class="factor-coeff">${coefficient}</div></header><div class="factor-meter"><i style="left:${position}%"></i></div><p>${esc(item.direction)}</p><p class="factor-meta">${esc(item.description)} · 공통 월 ${item.pairs.length}개 · 서로 다른 변화값 ${item.distinct}개</p></article>`}).join("")}
+function renderFactors(data){$("#factor-cards").innerHTML=data.sensitivities.map(item=>{const value=finite(item.coefficient)?item.coefficient:null,position=finite(value)?(value+1)*50:50,coefficient=finite(value)?value.toFixed(2):"판단 유보";return`<article class="factor-card"><header><div><h3>${esc(item.name)}</h3><span class="trend-chip ${finite(value)&&Math.abs(value)>=.4?"bad":"neutral"}">${item.strength}</span></div><div class="factor-coeff">${coefficient}</div></header><div class="factor-meter"><i style="left:${position}%"></i></div><p>${esc(item.direction)}</p><details class="factor-context"><summary>분석에 사용한 자료 보기</summary><p>${esc(item.description)} · 공통 월 ${item.pairs.length}개 · 서로 다른 변화값 ${item.distinct}개</p></details></article>`}).join("")}
 function renderMarket(data){
   $("#price-title").textContent=`${data.company.name} · ${$("#price-period").selectedOptions[0].textContent} 주가·이동평균선·거래량`;
   const metrics=[["이 기간에 주가가 얼마나 변했나",signedPercent(data.market.periodReturn),`${data.market.tradingDays}거래일`],["주가가 얼마나 흔들렸나",percent(data.market.volatility),"일별 변동을 연간 기준으로 환산"],["같은 업종과의 수익률 차이",signedPercent(data.market.excessReturn),finite(data.market.benchmarkReturn)?`같은 업종 주요 기업 평균 ${signedPercent(data.market.benchmarkReturn)}`:"업종 비교자료 부족"],["거래량이 크게 늘어난 날",`${data.market.volumeSurgeDays}일`,"직전 20일 평균의 3배 이상"]];
