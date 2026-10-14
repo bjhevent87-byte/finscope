@@ -23,7 +23,7 @@ $("#analysis-csv").onclick=()=>{if(analysis)downloadCsv(analysis)};
 const agentForm=$("#company-agent-form"),agentQuestion=$("#company-agent-question"),agentResult=$("#company-agent-result"),agentSubmit=$("#company-agent-submit");
 document.querySelectorAll("[data-agent-question]").forEach(button=>button.onclick=()=>{agentQuestion.value=button.dataset.agentQuestion;agentQuestion.focus()});
 const agentText=(element,text)=>{const item=document.createElement(element);item.textContent=text;return item};
-const agentValue=(value,unit)=>unit==="원"?money(value):`${Number(value).toFixed(1)}%`;
+const agentValue=(value,unit)=>unit==="원"?money(value):`${Number(value).toFixed(2)}%`;
 agentForm.addEventListener("submit",async event=>{
   event.preventDefault();
   const company=selected||analysis?.company;
@@ -38,7 +38,7 @@ agentForm.addEventListener("submit",async event=>{
     if(answer.status==="ready"&&answer.tool==="get_financial_trend"){
       const grid=document.createElement("div");grid.className="company-agent-figures";
       grid.append(agentText("span",`${evidence.previous.year}년 · ${agentValue(evidence.previous.value,evidence.unit)}`),agentText("span",`${evidence.current.year}년 · ${agentValue(evidence.current.value,evidence.unit)}`));
-      const change=evidence.unit==="원"?money(evidence.difference):`${evidence.difference>=0?"+":""}${Number(evidence.difference).toFixed(1)}%p`;
+      const change=evidence.unit==="원"?money(evidence.difference):`${evidence.difference>=0?"+":""}${Number(evidence.difference).toFixed(2)}%p`;
       grid.append(agentText("strong",`${evidence.label} 변화 ${change}`));nodes.push(grid);
       nodes.push(agentText("small",`DART 사업보고서 · ${evidence.basis} 기준 · ${evidence.calculation}`));
       if(evidence.comparisonNote)nodes.push(agentText("small",evidence.comparisonNote));
@@ -52,8 +52,8 @@ agentForm.addEventListener("submit",async event=>{
     }
     if(sources.childElementCount)nodes.push(sources);
     nodes.push(agentText("small",`조회 도구: ${answer.tool==="get_financial_trend"?"재무 추이":"최근 공시"} · 자동 계산과 AI 설명을 분리했습니다. 투자 판단 전 원문을 확인하세요.`));
-    agentResult.replaceChildren(...nodes);
-  }catch(error){agentResult.replaceChildren(agentText("p",error.message))}
+    agentResult.hidden=false;agentResult.replaceChildren(...nodes);
+  }catch(error){agentResult.hidden=false;agentResult.replaceChildren(agentText("p",error.message))}
   finally{agentSubmit.disabled=false}
 });
 
@@ -115,7 +115,6 @@ function qualityChecks(company,financials,macro,benchmark){
 
 function renderAnalysis(data){
   $("#status").hidden=true;$("#content").hidden=false;renderDecision(data);renderSummary(data);renderHealth(data);renderFactors(data);renderMarket(data);renderFinancials(data);renderResearch(data);
-  agentResult.hidden=true;agentResult.replaceChildren();
   $("#open-lab").href=`/correlation.html?${new URLSearchParams({mode:"company-macro",company:data.company.corpCode,b:"usd-krw",autorun:"1"})}#analysis-settings`;
   $("#decision").scrollIntoView({behavior:"smooth",block:"start"});
 }

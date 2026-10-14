@@ -27,3 +27,11 @@ test("home, comparison and generated navigation keep company work before the dat
     assert.deepEqual([...positions].sort((a, b) => a - b), positions, `${file}: wrong menu order`);
   }
 });
+
+test("late company analysis cannot hide a completed AI answer", async () => {
+  const company = await read("company.js");
+  const renderAnalysis = company.split("function renderAnalysis(data){")[1]?.split("function decisionModel")[0] || "";
+  assert.ok(renderAnalysis);
+  assert.ok(!renderAnalysis.includes("agentResult.hidden=true"));
+  assert.ok(company.includes("agentResult.hidden=false;agentResult.replaceChildren(...nodes)"));
+});
